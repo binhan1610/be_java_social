@@ -19,7 +19,7 @@ import java.util.Date;
 public class NotificationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
-    Long id;
+    Long notificationId;
 
     @Column(name = "title")
     String title;

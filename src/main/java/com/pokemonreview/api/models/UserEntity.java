@@ -18,16 +18,16 @@ public class UserEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private long accountId;
+
+    @Column(name = "profileId" , nullable = false, unique = true)
+    private String profileId;
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
     @Column(name = "password", nullable = false)
     private String password;
-
-    @Column(name = "email", nullable = false, unique = true)
-    private String email;
 
     @Column(name = "token",nullable = true)
     private String token;
@@ -42,26 +42,13 @@ public class UserEntity {
     private String facebookId;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "createTime", nullable = false, updatable = false)
     @CreationTimestamp
-    private Date createdAt;
+    private Date createTime;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updateTime", nullable = false)
     @UpdateTimestamp
-    private Date updatedAt;
+    private Date updatedTime;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private Note note;
-
-    @OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
-    private  Lable lable;
-
-    @OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
-    private Language language;
-
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
-    private List<Role> roles = new ArrayList<>();
 }

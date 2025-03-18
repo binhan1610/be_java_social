@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
 import com.pokemonreview.api.dto.LoginDto;
 import com.pokemonreview.api.dto.RegisterDto;
-import com.pokemonreview.api.models.Language;
 import com.pokemonreview.api.models.UserEntity;
-import com.pokemonreview.api.repository.LanguageRepository;
 import com.pokemonreview.api.repository.RoleRepository;
 import com.pokemonreview.api.repository.UserRepository;
 import com.pokemonreview.api.security.JWTGenerator;
@@ -27,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,10 +43,9 @@ public class AuthController {
     private final FacebookOAuthService facebookOAuthService;
     private ValidatorService validatorService;
     private TemplateService templateService;
-    private LanguageRepository languageRepository;
 
     @Autowired
-    public AuthController(FacebookOAuthService facebookOAuthService, LanguageRepository languageRepository, TemplateService templateService, ValidatorService validatorService, GoogleOAuthService googleOAuthService, AuthenticationManager authenticationManager, UserRepository userRepository,
+    public AuthController(FacebookOAuthService facebookOAuthService, TemplateService templateService, ValidatorService validatorService, GoogleOAuthService googleOAuthService, AuthenticationManager authenticationManager, UserRepository userRepository,
                           RoleRepository roleRepository, PasswordEncoder passwordEncoder, JWTGenerator jwtGenerator) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -59,7 +55,6 @@ public class AuthController {
         this.googleOAuthService = googleOAuthService;
         this.validatorService = validatorService;
         this.templateService = templateService;
-        this.languageRepository= languageRepository;
         this.facebookOAuthService = facebookOAuthService;
     }
 

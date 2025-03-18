@@ -12,6 +12,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     Boolean existsByUsername(String username);
     Optional<UserEntity> findById(Long id);
     Optional<UserEntity> findByEmail(String email);
-    @Query(" select  u from UserEntity u where u.fcm_token= :fcmToken")
+    @Query(" select u from UserEntity u where u.fcm_token= :fcmToken")
     Optional<UserEntity> findByFcm_Token(String fcmToken);
 }
