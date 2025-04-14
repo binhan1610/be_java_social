@@ -11,17 +11,16 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "account")
 @Data
 @NoArgsConstructor
 public class UserEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long accountId;
 
     @Column(name = "profileId" , nullable = false, unique = true)
-    private String profileId;
+    private long profileId;
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;

@@ -39,12 +39,10 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     public String sendNotification(String title, String payload, String fcm_token) {
-        UserEntity user = userRepository.findByFcm_Token(fcm_token).orElse(null);
+        UserEntity user = userRepository.findByFcmToken(fcm_token).orElse(null);
         if(user != null)
         {
-            System.out.println(user.getLanguage());
             HashMap<String,Object> model = new HashMap<>();
-            model.put("leng",user.getLanguage().getLanguage());
             model.put("title",title);
             model.put("payload",payload);
             try {
@@ -64,7 +62,7 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationEntity notificationEntity = new NotificationEntity();
                 notificationEntity.setTitle(resTitle);
                 notificationEntity.setPayload(resPayload);
-                notificationEntity.setUserId(user.getId());
+                notificationEntity.setUserId(user.getAccountId());
                 notificationRepository.save(notificationEntity);
                 return "send noti success";
             }

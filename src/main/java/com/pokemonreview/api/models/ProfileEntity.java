@@ -1,15 +1,19 @@
 package com.pokemonreview.api.models;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.util.Date;
-
+@Entity
+@Table(name = "profile")
+@Data
+@NoArgsConstructor
 public class ProfileEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long profileId;
 
     @Column(name = "email", nullable = false, unique = true)
