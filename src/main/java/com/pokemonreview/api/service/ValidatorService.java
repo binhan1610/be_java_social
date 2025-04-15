@@ -15,24 +15,20 @@ import java.util.Set;
 @Service
 public class ValidatorService
 {
-    private final JsonSchema schema;
-    private final ObjectMapper mapper;
+    private JsonSchema schema;
+    private ObjectMapper mapper;
 
-    public ValidatorService() throws Exception {
+    public Set<ValidationMessage> validate(String filePath, String jsonString) throws Exception {
         JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V4);
-        try (InputStream inputStream = getClass().getResourceAsStream("/LoginValidator.json")) {
+        try (InputStream inputStream = getClass().getResourceAsStream("/" + filePath + ".json")) {
             if (inputStream == null) {
                 throw new IllegalArgumentException("Schema file not found");
             }
             this.schema = factory.getSchema(inputStream);
         }
         this.mapper = new ObjectMapper();
-    }
-
-    public Set<ValidationMessage> validate(String jsonString) throws Exception {
         JsonNode jsonNode = mapper.readTree(jsonString);
         return schema.validate(jsonNode);
     }
-
 
 }

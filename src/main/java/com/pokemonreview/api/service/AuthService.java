@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
 import com.pokemonreview.api.dto.LoginDto;
 import com.pokemonreview.api.dto.RegisterDTO;
+import com.pokemonreview.api.libs.AuthConstant;
 import com.pokemonreview.api.models.ProfileEntity;
 import com.pokemonreview.api.models.UserEntity;
 import com.pokemonreview.api.repository.ProfileRepository;
@@ -63,15 +64,22 @@ public class AuthService {
     }
 
 
-    public String registerUser(RegisterDTO registerRequestDTO) throws Exception {
+    public ResponseEntity<?> registerUser(String registerJson) throws Exception {
         // Check if username or email already exists
+        Set<ValidationMessage> errors = validatorService.validate("RegisterValidator", registerJson);
+        if (!errors.isEmpty()) {
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        // Convert JSON string to LoginDto
+        RegisterDTO registerRequestDTO = new ObjectMapper().readValue(registerJson, RegisterDTO.class);
         if (userRepository.findByUsername(registerRequestDTO.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already exists!");
         }
         if (profileRepository.findByEmail(registerRequestDTO.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already exists!");
         }
-
+        long timeStamp = new Date().getTime();
         // Create new ProfileEntity
         ProfileEntity profile = new ProfileEntity();
         profile.setProfileId(getProfileId()); // Generate ID
@@ -82,7 +90,8 @@ public class AuthService {
         profile.setAvatar(registerRequestDTO.getAvatar());
         profile.setBirthDay(registerRequestDTO.getBirthDay());
         profile.setAddress(registerRequestDTO.getAddress());
-
+        profile.setCreateTime(timeStamp);
+        profile.setUpdatedTime(timeStamp);
         // Save ProfileEntity
         profile = profileRepository.save(profile);
 
@@ -95,17 +104,18 @@ public class AuthService {
         user.setFcm_token(registerRequestDTO.getFcmToken());
         user.setGoogleId(registerRequestDTO.getGoogleId());
         user.setFacebookId(registerRequestDTO.getFacebookId());
-
+        user.setCreateTime(timeStamp);
+        user.setUpdatedTime(timeStamp);
         // Save UserEntity
         userRepository.save(user);
 
-        return "User registered successfully!";
+        return ResponseEntity.ok("User registered successfully");
     }
 
     public ResponseEntity<?> login(String loginJson) {
         try {
             // Validate the JSON against the schema
-            Set<ValidationMessage> errors = validatorService.validate(loginJson);
+            Set<ValidationMessage> errors = validatorService.validate("LoginValidator", loginJson);
             if (!errors.isEmpty()) {
                 return ResponseEntity.badRequest().body(errors);
             }
@@ -178,18 +188,18 @@ public class AuthService {
             newUser.setAccountId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.USER)); // Sinh id
             newUser.setProfileId(savedProfile.getProfileId()); // Liên kết user với profile
             newUser.setUsername(email);
-            newUser.setPassword(passwordEncoder.encode("123456")); // Mật khẩu mặc định cho user mới
+            newUser.setPassword(passwordEncoder.encode(AuthConstant.DEFAULT_PASSWORD)); // Mật khẩu mặc định cho user mới
             UserEntity savedUser = userRepository.save(newUser);
 
             // Xác thực và tạo Token
-            Authentication authentication = authenticateUser(savedUser.getUsername(), "123456");
+            Authentication authentication = authenticateUser(savedUser.getUsername());
             Pair<String, Date> token = jwtGenerator.generateToken(authentication);
             return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
         }
 
 
         // Nếu user đã tồn tại, tiến hành xác thực
-        Authentication authentication = authenticateUser(user.getUsername(), "123456");
+        Authentication authentication = authenticateUser(user.getUsername());
         Pair<String, Date> token = jwtGenerator.generateToken(authentication);
 
         // Trả về RedirectView với token
@@ -212,13 +222,16 @@ public class AuthService {
 
         // Kiểm tra nếu user chưa tồn tại
         if (user == null) {
+            long timeStamp = new Date().getTime();
             // Tạo mới ProfileEntity
             ProfileEntity newProfile = new ProfileEntity();
             newProfile.setProfileId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.PROFILE)); // Sinh id
             newProfile.setEmail(email);
             newProfile.setFistName(facebookUser.get("first_name").asText());
             newProfile.setLastName(facebookUser.get("last_name").asText());
-            newProfile.setAvatar(facebookUser.get("picture").get("data").get("url").asText()); // Avatar từ Facebook
+            newProfile.setAvatar(facebookUser.get("picture").get("data").get("url").asText());
+            newProfile.setCreateTime(timeStamp);
+            newProfile.setUpdatedTime(timeStamp);
             ProfileEntity savedProfile = profileRepository.save(newProfile); // Lưu profile vào database
 
             // Tạo mới UserEntity liên kết với ProfileEntity
@@ -226,28 +239,32 @@ public class AuthService {
             newUser.setAccountId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.USER)); // Sinh id
             newUser.setProfileId(savedProfile.getProfileId()); // Liên kết user với profile
             newUser.setUsername(facebookUser.get("name").asText()); // Sử dụng tên người dùng từ Facebook
-            newUser.setPassword(passwordEncoder.encode("123456")); // Mật khẩu mặc định
-            UserEntity savedUser = userRepository.save(newUser);
+            newUser.setPassword(passwordEncoder.encode(AuthConstant.DEFAULT_PASSWORD)); // Mật khẩu mặc định
+            newUser.setCreateTime(timeStamp);
+            newUser.setUpdatedTime(timeStamp);
+
 
             // Xác thực người dùng mới
-            Authentication authentication = authenticateUser(savedUser.getUsername(), "123456");
+            Authentication authentication = authenticateUser(newUser.getUsername());
             Pair<String, Date> token = jwtGenerator.generateToken(authentication);
-
+            newUser.setFcm_token(token.getFirst());
+            userRepository.save(newUser);
             // Chuyển hướng với access token
             return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
         }
 
         // Nếu user đã tồn tại, xác thực và tạo JWT token
-        Authentication authentication = authenticateUser(user.getUsername(), "123456");
+        Authentication authentication = authenticateUser(user.getUsername());
         Pair<String, Date> token = jwtGenerator.generateToken(authentication);
-
+        user.setFcm_token(token.getFirst());
+        userRepository.save(user);
         // Chuyển hướng đến ứng dụng client với access token
         return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
     }
 
-    private Authentication authenticateUser(String username, String password) {
+    private Authentication authenticateUser(String username) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password));
+                new UsernamePasswordAuthenticationToken(username, AuthConstant.DEFAULT_PASSWORD));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return authentication;
     }

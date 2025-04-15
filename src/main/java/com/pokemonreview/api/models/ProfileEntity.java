@@ -37,15 +37,11 @@ public class ProfileEntity {
     @Column(name="address",nullable = true)
     private String address;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "createTime", nullable = false, updatable = false)
-    @CreationTimestamp
-    private Date createTime;
+    private long createTime;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updateTime", nullable = false)
-    @UpdateTimestamp
-    private Date updatedTime;
+    private long updatedTime;
 
 
 }

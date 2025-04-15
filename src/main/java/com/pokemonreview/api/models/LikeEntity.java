@@ -1,11 +1,16 @@
 package com.pokemonreview.api.models;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.util.Date;
-
+@Entity
+@Table(name = "emotion")
+@Data
+@NoArgsConstructor
 public class LikeEntity {
 
     @Id
@@ -15,22 +20,15 @@ public class LikeEntity {
     @Column(name = "userId")
     private long userId;
 
-    @Column(name = "postId")
-    private long postId;
-
-    @Column(name = "commentId")
-    private long commentId;
+    @Column(name = "rootId")
+    private long rootId;
 
     @Column(name = "type")
     private int type;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "createTime", nullable = false, updatable = false)
-    @CreationTimestamp
-    private Date createTime;
+    private long createTime;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updateTime", nullable = false)
-    @UpdateTimestamp
-    private Date updatedTime;
+    private long updatedTime;
 }

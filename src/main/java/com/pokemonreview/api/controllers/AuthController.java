@@ -44,12 +44,9 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestBody RegisterDTO registerRequestDTO) {
+    public ResponseEntity<?> registerUser(@RequestBody String registerJson) {
         try {
-            String result = authService.registerUser(registerRequestDTO);
-            return ResponseEntity.ok(result); // Trả về nếu đăng ký thành công
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage()); // Trả về lỗi nếu thông tin không hợp lệ
+            return authService.registerUser(registerJson);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
         }

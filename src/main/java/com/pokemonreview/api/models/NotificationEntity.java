@@ -33,13 +33,9 @@ public class NotificationEntity {
     @Column(name = "user_id")
     Long userId;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_at", nullable = false, updatable = false)
-    @CreationTimestamp
-    private Date createdAt;
+    @Column(name = "createTime", nullable = false, updatable = false)
+    private long createTime;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "updated_at", nullable = false)
-    @UpdateTimestamp
-    private Date updatedAt;
+    @Column(name = "updateTime", nullable = false)
+    private long updatedTime;
 }

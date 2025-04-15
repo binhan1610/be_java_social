@@ -1,11 +1,16 @@
 package com.pokemonreview.api.models;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.util.Date;
-
+@Entity
+@Table(name = "comment")
+@Data
+@NoArgsConstructor
 public class CommentEntity {
 
     @Id
@@ -15,11 +20,8 @@ public class CommentEntity {
     @Column(name = "userId")
     private long userId;
 
-    @Column(name = "postId")
-    private long postId;
-
-    @Column(name = "reCommentId")
-    private long reCommentId;
+    @Column(name = "rootId")
+    private long rootId;
 
     @Column(name = "image")
     private String image;
@@ -27,13 +29,9 @@ public class CommentEntity {
     @Column(name = "title")
     private String title;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "createTime", nullable = false, updatable = false)
-    @CreationTimestamp
-    private Date createTime;
+    private long createTime;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updateTime", nullable = false)
-    @UpdateTimestamp
-    private Date updatedTime;
+    private long updatedTime;
 }
