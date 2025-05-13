@@ -14,7 +14,6 @@ import java.util.Date;
 public class CommentEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long commentId;
 
     @Column(name = "userId")

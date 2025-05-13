@@ -16,13 +16,13 @@ public class ProfileEntity {
     @Id
     private long profileId;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = true, unique = true)
     private String email;
 
-    @Column(name = "phoneNumber", nullable = false, unique = true)
+    @Column(name = "phoneNumber", nullable = true, unique = true)
     private String phoneNumber;
 
-    @Column(name = "fistName", nullable = false, unique = true)
+    @Column(name = "fistName", nullable = false)
     private String fistName;
 
     @Column(name = "lastName", nullable = false)
@@ -36,6 +36,9 @@ public class ProfileEntity {
 
     @Column(name="address",nullable = true)
     private String address;
+
+    @Column(name="sex",nullable = true)
+    private String sex;
 
     @Column(name = "createTime", nullable = false, updatable = false)
     private long createTime;

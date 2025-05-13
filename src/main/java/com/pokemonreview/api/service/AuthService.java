@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
 import com.pokemonreview.api.dto.LoginDto;
 import com.pokemonreview.api.dto.RegisterDTO;
+import com.pokemonreview.api.dto.UpdateProfileDto;
 import com.pokemonreview.api.libs.AuthConstant;
 import com.pokemonreview.api.models.ProfileEntity;
 import com.pokemonreview.api.models.UserEntity;
@@ -63,6 +64,148 @@ public class AuthService {
         return IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.PROFILE);
     }
 
+    public Map<String, Object> convertProfileToModel(ProfileEntity profile) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("profileId", profile.getProfileId());
+
+        if (profile.getEmail() != null) {
+            model.put("email", profile.getEmail());
+        }
+        if (profile.getPhoneNumber() != null) {
+            model.put("phoneNumber", profile.getPhoneNumber());
+        }
+        if (profile.getFistName() != null) {
+            model.put("firstName", profile.getFistName());
+        }
+        if (profile.getLastName() != null) {
+            model.put("lastName", profile.getLastName());
+        }
+        if (profile.getAvatar() != null) {
+            model.put("avatar", profile.getAvatar());
+        }
+        if (profile.getBirthDay() != null) {
+            model.put("birthDay", profile.getBirthDay());
+        }
+        if (profile.getAddress() != null) {
+            model.put("address", profile.getAddress());
+        }
+        if (profile.getSex() != null) {
+            model.put("sex", profile.getSex());
+        }
+        return model;
+    }
+
+
+    public ResponseEntity<?> getProfileUser(String username) {
+        try {
+            // Lấy user từ username
+            UserEntity user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Lấy profileId từ user
+            long profileId = user.getProfileId();
+
+            ProfileEntity profile = profileRepository.findById(profileId)
+                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+
+            Map<String, Object> model = convertProfileToModel(profile);
+            JsonNode jsonResponse = templateService.generateJsonFromTemplate("profile.ftl", model);
+            return new ResponseEntity<>(jsonResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving profile: " + e.getMessage());
+        }
+    }
+
+    public void logOut(String username){
+        UserEntity user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setToken(null);
+        userRepository.save(user);
+    }
+
+    public ResponseEntity<?> updateProfile(String username, String profileJson) {
+        try {
+            // Validate JSON against schema using DTO
+            Set<ValidationMessage> errors = validatorService.validate("UpdateProfileValidator", profileJson);
+            if (!errors.isEmpty()) {
+                return ResponseEntity.badRequest().body(errors);
+            }
+
+            // Lấy user từ username
+            UserEntity user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Lấy profileId từ user
+            long profileId = user.getProfileId();
+
+            // Kiểm tra profile có tồn tại không
+            ProfileEntity existingProfile = profileRepository.findById(profileId)
+                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+
+            // Chuyển JSON sang ProfileUpdateDTO
+            ObjectMapper objectMapper = new ObjectMapper();
+            UpdateProfileDto profileUpdateDTO = objectMapper.readValue(profileJson, UpdateProfileDto.class);
+
+            // Cập nhật các trường trong profile nếu có thông tin trong DTO
+            if (profileUpdateDTO.getEmail() != null && !profileUpdateDTO.getEmail().isEmpty()) {
+                if (profileRepository.findByEmail(profileUpdateDTO.getEmail()).isPresent() && !existingProfile.getEmail().equals(profileUpdateDTO.getEmail())) {
+                    return ResponseEntity.badRequest().body("Email already exists!");
+                }
+                existingProfile.setEmail(profileUpdateDTO.getEmail());
+            }
+
+            if (profileUpdateDTO.getPhoneNumber() != null && !profileUpdateDTO.getPhoneNumber().isEmpty() && !existingProfile.getPhoneNumber().equals(profileUpdateDTO.getPhoneNumber()) ) {
+                if (profileRepository.findByPhoneNumber(profileUpdateDTO.getPhoneNumber()).isPresent()) {
+                    return ResponseEntity.badRequest().body("Phone already exists!");
+                }
+                existingProfile.setPhoneNumber(profileUpdateDTO.getPhoneNumber());
+            }
+
+            if (profileUpdateDTO.getFirstName() != null && !profileUpdateDTO.getFirstName().isEmpty()) {
+                existingProfile.setFistName(profileUpdateDTO.getFirstName());
+            }
+
+            if (profileUpdateDTO.getLastName() != null && !profileUpdateDTO.getLastName().isEmpty()) {
+                existingProfile.setLastName(profileUpdateDTO.getLastName());
+            }
+
+            if (profileUpdateDTO.getAvatar() != null && !profileUpdateDTO.getAvatar().isEmpty()) {
+                existingProfile.setAvatar(profileUpdateDTO.getAvatar());
+            }
+
+            if (profileUpdateDTO.getBirthDay() != null && !profileUpdateDTO.getBirthDay().isEmpty()) {
+                existingProfile.setBirthDay(profileUpdateDTO.getBirthDay());
+            }
+
+            if (profileUpdateDTO.getAddress() != null && !profileUpdateDTO.getAddress().isEmpty()) {
+                existingProfile.setAddress(profileUpdateDTO.getAddress());
+            }
+
+            if (profileUpdateDTO.getSex() != null && !profileUpdateDTO.getSex().isEmpty()) {
+                existingProfile.setSex(profileUpdateDTO.getSex());
+            }
+
+            // Cập nhật thời gian
+            existingProfile.setUpdatedTime(System.currentTimeMillis());
+
+            // Lưu lại thông tin đã cập nhật
+            profileRepository.save(existingProfile);
+
+            // Tạo response model
+            Map<String, Object> model = convertProfileToModel(existingProfile);
+
+            // Generate JSON response from template
+            JsonNode jsonResponse = templateService.generateJsonFromTemplate("profile.ftl", model);
+
+            return new ResponseEntity<>(jsonResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error updating profile: " + e.getMessage());
+        }
+    }
+
+
 
     public ResponseEntity<?> registerUser(String registerJson) throws Exception {
         // Check if username or email already exists
@@ -73,23 +216,28 @@ public class AuthService {
 
         // Convert JSON string to LoginDto
         RegisterDTO registerRequestDTO = new ObjectMapper().readValue(registerJson, RegisterDTO.class);
-        if (userRepository.findByUsername(registerRequestDTO.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("Username already exists!");
-        }
-        if (profileRepository.findByEmail(registerRequestDTO.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email already exists!");
+        String username = registerRequestDTO.getUsername();
+        if (userRepository.findByUsername(username).isPresent()) {
+            return ResponseEntity.badRequest().body("Username already exists!");
         }
         long timeStamp = new Date().getTime();
         // Create new ProfileEntity
         ProfileEntity profile = new ProfileEntity();
         profile.setProfileId(getProfileId()); // Generate ID
-        profile.setEmail(registerRequestDTO.getEmail());
-        profile.setPhoneNumber(registerRequestDTO.getPhoneNumber());
         profile.setFistName(registerRequestDTO.getFirstName());
         profile.setLastName(registerRequestDTO.getLastName());
-        profile.setAvatar(registerRequestDTO.getAvatar());
-        profile.setBirthDay(registerRequestDTO.getBirthDay());
-        profile.setAddress(registerRequestDTO.getAddress());
+        profile.setSex(registerRequestDTO.getSex());
+        if (username.contains("@")) {
+            if (profileRepository.findByEmail(username).isPresent()) {
+                return ResponseEntity.badRequest().body("Email already exists!");
+            }
+            profile.setEmail(username);
+        } else {
+            if (profileRepository.findByPhoneNumber(username).isPresent()) {
+                return ResponseEntity.badRequest().body("Phone already exists!");
+            }
+            profile.setPhoneNumber(username);
+        }
         profile.setCreateTime(timeStamp);
         profile.setUpdatedTime(timeStamp);
         // Save ProfileEntity
@@ -101,9 +249,6 @@ public class AuthService {
         user.setProfileId(profile.getProfileId()); // Link user to profile
         user.setUsername(registerRequestDTO.getUsername());
         user.setPassword(passwordEncoder.encode(registerRequestDTO.getPassword())); // Encode password
-        user.setFcm_token(registerRequestDTO.getFcmToken());
-        user.setGoogleId(registerRequestDTO.getGoogleId());
-        user.setFacebookId(registerRequestDTO.getFacebookId());
         user.setCreateTime(timeStamp);
         user.setUpdatedTime(timeStamp);
         // Save UserEntity
@@ -147,7 +292,6 @@ public class AuthService {
             Map<String, Object> model = new HashMap<>();
             model.put("accessToken", token.getFirst());
             model.put("expireDate", expireDate);
-
             // Build JSON response using template
             JsonNode jsonResponse = templateService.generateJsonFromTemplate("responseLogin.ftl", model);
 

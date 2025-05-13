@@ -17,22 +17,21 @@ import java.util.List;
 public class PostEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long postId;
+
+    @Column(name = "userId")
+    private long userId;
+
+    @Column(name = "id")
+    private long id;
 
     @Column(name = "lables")
     @Convert(converter = StringArrayConverter.class)
     private String[] lables;
 
-    @Column(name = "tags")
-    @Convert(converter = LongArrayConverter.class) // Sử dụng converter để chuyển đổi Long[]
-    private Long[] tags;
-
-
     @Column(name = "images")
     @Convert(converter = StringArrayConverter.class) // Sử dụng converter để chuyển đổi String[]
     private String[] images;
-
 
     @Column(name = "caption")
     private String caption;

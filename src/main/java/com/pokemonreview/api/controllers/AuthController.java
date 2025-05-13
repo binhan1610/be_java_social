@@ -1,24 +1,16 @@
 package com.pokemonreview.api.controllers;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.pokemonreview.api.dto.RegisterDTO;
-import com.pokemonreview.api.models.UserEntity;
-import com.pokemonreview.api.repository.UserRepository;
-import com.pokemonreview.api.security.JWTGenerator;
 import com.pokemonreview.api.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.util.Pair;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.util.Date;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,6 +23,19 @@ public class AuthController {
     @Autowired
     public AuthController(AuthService authService) {
         this.authService = authService;
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            authService.logOut(username);
+            return ResponseEntity.ok("Logout successful.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error logging out: " + e.getMessage());
+        }
     }
 
     @PostMapping("/login")
@@ -48,7 +53,7 @@ public class AuthController {
         try {
             return authService.registerUser(registerJson);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Server Error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
