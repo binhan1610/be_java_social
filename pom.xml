@@ -32,7 +32,11 @@
 			<artifactId>firebase-admin</artifactId>
 			<version>9.1.1</version> <!-- Thay version phù hợp -->
 		</dependency>
-
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>32.1.2-jre</version> <!-- hoặc phiên bản >= 21.0 -->
+		</dependency>
 		<dependency>
 			<groupId>org.eclipse.paho</groupId>
 			<artifactId>org.eclipse.paho.client.mqttv3</artifactId>

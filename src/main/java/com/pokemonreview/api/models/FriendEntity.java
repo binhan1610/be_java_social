@@ -1,5 +1,8 @@
 package com.pokemonreview.api.models;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -7,6 +10,8 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "friend")
+@Data
+@NoArgsConstructor
 public class FriendEntity {
     @Id
     private long id;

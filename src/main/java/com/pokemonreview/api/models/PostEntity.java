@@ -25,9 +25,9 @@ public class PostEntity {
     @Column(name = "id")
     private long id;
 
-    @Column(name = "lables")
+    @Column(name = "tags")
     @Convert(converter = StringArrayConverter.class)
-    private String[] lables;
+    private String[] tags;
 
     @Column(name = "images")
     @Convert(converter = StringArrayConverter.class) // Sử dụng converter để chuyển đổi String[]

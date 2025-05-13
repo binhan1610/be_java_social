@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -23,8 +24,15 @@ public class FirebaseService {
     private static final String BUCKET_NAME = "storage-image-80802.appspot.com";
 
     private String uploadFile(File file, String fileName) throws Exception {
-        BlobId blobId = BlobId.of("storage-image-80802.appspot.com", fileName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("media").build();
+        BlobId blobId = BlobId.of(BUCKET_NAME, fileName);
+
+        // Tạo metadata với token truy cập
+        String token = UUID.randomUUID().toString();
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType("media")
+                .setMetadata(Map.of("firebaseStorageDownloadTokens", token))
+                .build();
+
         InputStream inputStream = FirebaseService.class.getClassLoader().getResourceAsStream("firebase-config.json");
         if (inputStream == null) {
             throw new Exception("Firebase config file not found");
@@ -32,9 +40,16 @@ public class FirebaseService {
 
         Credentials credentials = GoogleCredentials.fromStream(inputStream);
         Storage storage = StorageOptions.newBuilder().setCredentials(credentials).build().getService();
-        Blob blob= storage.create(blobInfo, Files.readAllBytes(file.toPath()));
-        String downloadUrl = String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media",BUCKET_NAME
-                , URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()));
+        Blob blob = storage.create(blobInfo, Files.readAllBytes(file.toPath()));
+
+        // Tạo URL có kèm token truy cập
+        String downloadUrl = String.format(
+                "https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
+                BUCKET_NAME,
+                URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()),
+                token
+        );
+
         return downloadUrl;
     }
 
@@ -69,6 +84,7 @@ public class FirebaseService {
             return null; // or throw a specific exception or return an error message
         }
     }
+
     public String sendOtp(String phoneNumber) {
         try {
             // Gửi OTP cho số điện thoại bằng Firebase
