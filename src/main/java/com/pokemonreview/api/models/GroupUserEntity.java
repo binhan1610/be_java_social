@@ -4,8 +4,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
+@Entity
+@Table(name = "groupusers")
 @Data
 @NoArgsConstructor
 public class GroupUserEntity {
@@ -15,6 +19,12 @@ public class GroupUserEntity {
 
     @Column(name = "name")
     private String name;
+
+    @Column(name = "groupAvatar")
+    private String groupAvatar;
+
+    @Column(name = "groupBackground")
+    private String groupBackground;
 
     @Column(name = "description")
     private String description;

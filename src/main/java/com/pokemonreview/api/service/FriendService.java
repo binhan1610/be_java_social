@@ -19,7 +19,7 @@ public class FriendService {
     }
 
     public ResponseEntity<?> addFriend(Long userId, Long friendId) {
-        FriendEntity friendExists = friendRepository.findByUserIdAndFriendId(userId, friendId);
+        FriendEntity friendExists = friendRepository.findByIdAndUserId(userId, friendId);
 
         if (friendExists != null) {
             int status = friendExists.getStatus();
@@ -49,7 +49,7 @@ public class FriendService {
     }
 
     public ResponseEntity<?> removeFriend(Long userId, Long friendId) {
-        FriendEntity friend = friendRepository.findByUserIdAndFriendId(userId, friendId);
+        FriendEntity friend = friendRepository.findByIdAndUserId(userId, friendId);
         if (friend != null) {
             friendRepository.delete(friend);
             return ResponseEntity.ok("Đã hủy kết bạn");

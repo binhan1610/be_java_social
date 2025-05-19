@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface FriendRepository extends JpaRepository<FriendEntity, Long> {
 
-    FriendEntity findByUserIdAndFriendId(long userId, long friendId);
+    FriendEntity findByIdAndUserId(long userId, long friendId);
     // Tìm danh sách bạn bè theo userId
     List<FriendEntity> findByUserId(long userId);
 
