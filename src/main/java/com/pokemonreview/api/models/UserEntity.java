@@ -17,10 +17,7 @@ import java.util.List;
 public class UserEntity {
 
     @Id
-    private long accountId;
-
-    @Column(name = "profileId" , nullable = false, unique = true)
-    private long profileId;
+    private long userId;
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;
@@ -31,8 +28,8 @@ public class UserEntity {
     @Column(name = "token",nullable = true)
     private String token;
 
-    @Column(name="fcm_token",nullable = true)
-    private String fcm_token;
+    @Column(name="fcmToken",nullable = true)
+    private String fcmToken;
 
     @Column(name = "google_id", unique = true,nullable = true)
     private String googleId;

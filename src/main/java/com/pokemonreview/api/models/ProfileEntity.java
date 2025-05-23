@@ -14,12 +14,12 @@ import java.util.Date;
 public class ProfileEntity {
 
     @Id
-    private long profileId;
+    private long userId;
 
-    @Column(name = "email", nullable = true, unique = true)
+    @Column(name = "email", nullable = true)
     private String email;
 
-    @Column(name = "phoneNumber", nullable = true, unique = true)
+    @Column(name = "phoneNumber", nullable = true)
     private String phoneNumber;
 
     @Column(name = "fistName", nullable = false)

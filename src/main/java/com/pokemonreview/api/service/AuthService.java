@@ -66,7 +66,7 @@ public class AuthService {
 
     public Map<String, Object> convertProfileToModel(ProfileEntity profile) {
         Map<String, Object> model = new HashMap<>();
-        model.put("profileId", profile.getProfileId());
+        model.put("profileId", profile.getUserId());
 
         if (profile.getEmail() != null) {
             model.put("email", profile.getEmail());
@@ -103,7 +103,7 @@ public class AuthService {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             // Lấy profileId từ user
-            long profileId = user.getProfileId();
+            long profileId = user.getUserId();
 
             ProfileEntity profile = profileRepository.findById(profileId)
                     .orElseThrow(() -> new RuntimeException("Profile not found"));
@@ -117,7 +117,7 @@ public class AuthService {
         }
     }
 
-    public void logOut(String username){
+    public void logOut(String username) {
         UserEntity user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setToken(null);
@@ -137,7 +137,7 @@ public class AuthService {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             // Lấy profileId từ user
-            long profileId = user.getProfileId();
+            long profileId = user.getUserId();
 
             // Kiểm tra profile có tồn tại không
             ProfileEntity existingProfile = profileRepository.findById(profileId)
@@ -148,14 +148,14 @@ public class AuthService {
             UpdateProfileDto profileUpdateDTO = objectMapper.readValue(profileJson, UpdateProfileDto.class);
 
             // Cập nhật các trường trong profile nếu có thông tin trong DTO
-            if (profileUpdateDTO.getEmail() != null && !profileUpdateDTO.getEmail().isEmpty()) {
-                if (profileRepository.findByEmail(profileUpdateDTO.getEmail()).isPresent() && !existingProfile.getEmail().equals(profileUpdateDTO.getEmail())) {
+            if (profileUpdateDTO.getEmail() != null && !profileUpdateDTO.getEmail().isEmpty() && !existingProfile.getEmail().equals(profileUpdateDTO.getEmail())) {
+                if (profileRepository.findByEmail(profileUpdateDTO.getEmail()).isPresent()) {
                     return ResponseEntity.badRequest().body("Email already exists!");
                 }
                 existingProfile.setEmail(profileUpdateDTO.getEmail());
             }
 
-            if (profileUpdateDTO.getPhoneNumber() != null && !profileUpdateDTO.getPhoneNumber().isEmpty() && !existingProfile.getPhoneNumber().equals(profileUpdateDTO.getPhoneNumber()) ) {
+            if (profileUpdateDTO.getPhoneNumber() != null && !profileUpdateDTO.getPhoneNumber().isEmpty() && !existingProfile.getPhoneNumber().equals(profileUpdateDTO.getPhoneNumber())) {
                 if (profileRepository.findByPhoneNumber(profileUpdateDTO.getPhoneNumber()).isPresent()) {
                     return ResponseEntity.badRequest().body("Phone already exists!");
                 }
@@ -206,7 +206,6 @@ public class AuthService {
     }
 
 
-
     public ResponseEntity<?> registerUser(String registerJson) throws Exception {
         // Check if username or email already exists
         Set<ValidationMessage> errors = validatorService.validate("RegisterValidator", registerJson);
@@ -223,7 +222,7 @@ public class AuthService {
         long timeStamp = new Date().getTime();
         // Create new ProfileEntity
         ProfileEntity profile = new ProfileEntity();
-        profile.setProfileId(getProfileId()); // Generate ID
+        profile.setUserId(getProfileId()); // Generate ID
         profile.setFistName(registerRequestDTO.getFirstName());
         profile.setLastName(registerRequestDTO.getLastName());
         profile.setSex(registerRequestDTO.getSex());
@@ -232,11 +231,13 @@ public class AuthService {
                 return ResponseEntity.badRequest().body("Email already exists!");
             }
             profile.setEmail(username);
+            profile.setPhoneNumber("");
         } else {
             if (profileRepository.findByPhoneNumber(username).isPresent()) {
                 return ResponseEntity.badRequest().body("Phone already exists!");
             }
             profile.setPhoneNumber(username);
+            profile.setEmail("");
         }
         profile.setCreateTime(timeStamp);
         profile.setUpdatedTime(timeStamp);
@@ -245,8 +246,7 @@ public class AuthService {
 
         // Create new UserEntity
         UserEntity user = new UserEntity();
-        user.setAccountId(getUserId()); // Generate ID
-        user.setProfileId(profile.getProfileId()); // Link user to profile
+        user.setUserId(profile.getUserId());
         user.setUsername(registerRequestDTO.getUsername());
         user.setPassword(passwordEncoder.encode(registerRequestDTO.getPassword())); // Encode password
         user.setCreateTime(timeStamp);
@@ -257,7 +257,8 @@ public class AuthService {
         return ResponseEntity.ok("User registered successfully");
     }
 
-    public ResponseEntity<?> login(String loginJson) {
+    public ResponseEntity<?>
+    login(String loginJson) {
         try {
             // Validate the JSON against the schema
             Set<ValidationMessage> errors = validatorService.validate("LoginValidator", loginJson);
@@ -284,7 +285,7 @@ public class AuthService {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             user.setToken(token.getFirst());
-            user.setFcm_token(loginDto.getFcm_token());
+            user.setFcmToken(loginDto.getFcm_token());
             userRepository.save(user);
 
             // Prepare response model
@@ -301,110 +302,110 @@ public class AuthService {
         }
     }
 
-    public RedirectView googleOAuthLogin(String code) throws Exception {
-        // Lấy token từ Google OAuth
-        JsonNode tokenResponse = googleOAuthService.getOauthGoogleToken(code);
-        String idToken = tokenResponse.get("id_token").asText();
-        String aToken = tokenResponse.get("access_token").asText();
-
-        // Lấy thông tin người dùng từ Google
-        JsonNode googleUser = googleOAuthService.getGoogleUser(idToken, aToken);
-        if (!googleUser.get("verified_email").asBoolean()) {
-            throw new Exception("Google email not verified");
-        }
-
-        String email = googleUser.get("email").asText();
-        UserEntity user = userRepository.findByEmail(email).orElse(null);
-
-        // Kiểm tra nếu user chưa tồn tại, tạo mới
-        if (user == null) {
-            // Tạo mới ProfileEntity
-            ProfileEntity newProfile = new ProfileEntity();
-            newProfile.setProfileId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.PROFILE)); // Sinh id
-            newProfile.setEmail(email);
-            newProfile.setFistName(googleUser.get("given_name").asText()); // Lấy first name từ Google
-            newProfile.setLastName(googleUser.get("family_name").asText()); // Lấy last name từ Google
-            newProfile.setAvatar(googleUser.get("picture").asText()); // Avatar từ Google
-            ProfileEntity savedProfile = profileRepository.save(newProfile); // Lưu profile vào database
-
-            // Tạo mới UserEntity liên kết với ProfileEntity
-            UserEntity newUser = new UserEntity();
-            newUser.setAccountId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.USER)); // Sinh id
-            newUser.setProfileId(savedProfile.getProfileId()); // Liên kết user với profile
-            newUser.setUsername(email);
-            newUser.setPassword(passwordEncoder.encode(AuthConstant.DEFAULT_PASSWORD)); // Mật khẩu mặc định cho user mới
-            UserEntity savedUser = userRepository.save(newUser);
-
-            // Xác thực và tạo Token
-            Authentication authentication = authenticateUser(savedUser.getUsername());
-            Pair<String, Date> token = jwtGenerator.generateToken(authentication);
-            return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
-        }
-
-
-        // Nếu user đã tồn tại, tiến hành xác thực
-        Authentication authentication = authenticateUser(user.getUsername());
-        Pair<String, Date> token = jwtGenerator.generateToken(authentication);
-
-        // Trả về RedirectView với token
-        return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
-    }
-
-    public RedirectView facebookOAuthLogin(String code) throws Exception {
-        // Lấy token từ Facebook
-        JsonNode tokenResponse = facebookOAuthService.getOauthFacebookToken(code);
-        String accessToken = tokenResponse.get("access_token").asText();
-
-        // Lấy thông tin người dùng từ Facebook
-        JsonNode facebookUser = facebookOAuthService.getFacebookUser(accessToken);
-        if (facebookUser.get("email") == null) {
-            throw new Exception("Facebook email not available");
-        }
-
-        String email = facebookUser.get("email").asText();
-        UserEntity user = userRepository.findByEmail(email).orElse(null);
-
-        // Kiểm tra nếu user chưa tồn tại
-        if (user == null) {
-            long timeStamp = new Date().getTime();
-            // Tạo mới ProfileEntity
-            ProfileEntity newProfile = new ProfileEntity();
-            newProfile.setProfileId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.PROFILE)); // Sinh id
-            newProfile.setEmail(email);
-            newProfile.setFistName(facebookUser.get("first_name").asText());
-            newProfile.setLastName(facebookUser.get("last_name").asText());
-            newProfile.setAvatar(facebookUser.get("picture").get("data").get("url").asText());
-            newProfile.setCreateTime(timeStamp);
-            newProfile.setUpdatedTime(timeStamp);
-            ProfileEntity savedProfile = profileRepository.save(newProfile); // Lưu profile vào database
-
-            // Tạo mới UserEntity liên kết với ProfileEntity
-            UserEntity newUser = new UserEntity();
-            newUser.setAccountId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.USER)); // Sinh id
-            newUser.setProfileId(savedProfile.getProfileId()); // Liên kết user với profile
-            newUser.setUsername(facebookUser.get("name").asText()); // Sử dụng tên người dùng từ Facebook
-            newUser.setPassword(passwordEncoder.encode(AuthConstant.DEFAULT_PASSWORD)); // Mật khẩu mặc định
-            newUser.setCreateTime(timeStamp);
-            newUser.setUpdatedTime(timeStamp);
-
-
-            // Xác thực người dùng mới
-            Authentication authentication = authenticateUser(newUser.getUsername());
-            Pair<String, Date> token = jwtGenerator.generateToken(authentication);
-            newUser.setFcm_token(token.getFirst());
-            userRepository.save(newUser);
-            // Chuyển hướng với access token
-            return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
-        }
-
-        // Nếu user đã tồn tại, xác thực và tạo JWT token
-        Authentication authentication = authenticateUser(user.getUsername());
-        Pair<String, Date> token = jwtGenerator.generateToken(authentication);
-        user.setFcm_token(token.getFirst());
-        userRepository.save(user);
-        // Chuyển hướng đến ứng dụng client với access token
-        return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
-    }
+//    public RedirectView googleOAuthLogin(String code) throws Exception {
+//        // Lấy token từ Google OAuth
+//        JsonNode tokenResponse = googleOAuthService.getOauthGoogleToken(code);
+//        String idToken = tokenResponse.get("id_token").asText();
+//        String aToken = tokenResponse.get("access_token").asText();
+//
+//        // Lấy thông tin người dùng từ Google
+//        JsonNode googleUser = googleOAuthService.getGoogleUser(idToken, aToken);
+//        if (!googleUser.get("verified_email").asBoolean()) {
+//            throw new Exception("Google email not verified");
+//        }
+//
+//        String email = googleUser.get("email").asText();
+//        UserEntity user = userRepository.findByEmail(email).orElse(null);
+//
+//        // Kiểm tra nếu user chưa tồn tại, tạo mới
+//        if (user == null) {
+//            // Tạo mới ProfileEntity
+//            ProfileEntity newProfile = new ProfileEntity();
+//            newProfile.setUserId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.PROFILE)); // Sinh id
+//            newProfile.setEmail(email);
+//            newProfile.setFistName(googleUser.get("given_name").asText()); // Lấy first name từ Google
+//            newProfile.setLastName(googleUser.get("family_name").asText()); // Lấy last name từ Google
+//            newProfile.setAvatar(googleUser.get("picture").asText()); // Avatar từ Google
+//            ProfileEntity savedProfile = profileRepository.save(newProfile); // Lưu profile vào database
+//
+//            // Tạo mới UserEntity liên kết với ProfileEntity
+//            UserEntity newUser = new UserEntity();
+//            newUser.setUserId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.USER)); // Sinh id
+//            newUser.setUserId(savedProfile.getUserId()); // Liên kết user với profile
+//            newUser.setUsername(email);
+//            newUser.setPassword(passwordEncoder.encode(AuthConstant.DEFAULT_PASSWORD)); // Mật khẩu mặc định cho user mới
+//            UserEntity savedUser = userRepository.save(newUser);
+//
+//            // Xác thực và tạo Token
+//            Authentication authentication = authenticateUser(savedUser.getUsername());
+//            Pair<String, Date> token = jwtGenerator.generateToken(authentication);
+//            return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
+//        }
+//
+//
+//        // Nếu user đã tồn tại, tiến hành xác thực
+//        Authentication authentication = authenticateUser(user.getUsername());
+//        Pair<String, Date> token = jwtGenerator.generateToken(authentication);
+//
+//        // Trả về RedirectView với token
+//        return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
+//    }
+//
+//    public RedirectView facebookOAuthLogin(String code) throws Exception {
+//        // Lấy token từ Facebook
+//        JsonNode tokenResponse = facebookOAuthService.getOauthFacebookToken(code);
+//        String accessToken = tokenResponse.get("access_token").asText();
+//
+//        // Lấy thông tin người dùng từ Facebook
+//        JsonNode facebookUser = facebookOAuthService.getFacebookUser(accessToken);
+//        if (facebookUser.get("email") == null) {
+//            throw new Exception("Facebook email not available");
+//        }
+//
+//        String email = facebookUser.get("email").asText();
+//        UserEntity user = userRepository.findByEmail(email).orElse(null);
+//
+//        // Kiểm tra nếu user chưa tồn tại
+//        if (user == null) {
+//            long timeStamp = new Date().getTime();
+//            // Tạo mới ProfileEntity
+//            ProfileEntity newProfile = new ProfileEntity();
+//            newProfile.setProfileId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.PROFILE)); // Sinh id
+//            newProfile.setEmail(email);
+//            newProfile.setFistName(facebookUser.get("first_name").asText());
+//            newProfile.setLastName(facebookUser.get("last_name").asText());
+//            newProfile.setAvatar(facebookUser.get("picture").get("data").get("url").asText());
+//            newProfile.setCreateTime(timeStamp);
+//            newProfile.setUpdatedTime(timeStamp);
+//            ProfileEntity savedProfile = profileRepository.save(newProfile); // Lưu profile vào database
+//
+//            // Tạo mới UserEntity liên kết với ProfileEntity
+//            UserEntity newUser = new UserEntity();
+//            newUser.setAccountId(IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.USER)); // Sinh id
+//            newUser.setProfileId(savedProfile.getProfileId()); // Liên kết user với profile
+//            newUser.setUsername(facebookUser.get("name").asText()); // Sử dụng tên người dùng từ Facebook
+//            newUser.setPassword(passwordEncoder.encode(AuthConstant.DEFAULT_PASSWORD)); // Mật khẩu mặc định
+//            newUser.setCreateTime(timeStamp);
+//            newUser.setUpdatedTime(timeStamp);
+//
+//
+//            // Xác thực người dùng mới
+//            Authentication authentication = authenticateUser(newUser.getUsername());
+//            Pair<String, Date> token = jwtGenerator.generateToken(authentication);
+//            newUser.setFcm_token(token.getFirst());
+//            userRepository.save(newUser);
+//            // Chuyển hướng với access token
+//            return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
+//        }
+//
+//        // Nếu user đã tồn tại, xác thực và tạo JWT token
+//        Authentication authentication = authenticateUser(user.getUsername());
+//        Pair<String, Date> token = jwtGenerator.generateToken(authentication);
+//        user.setFcm_token(token.getFirst());
+//        userRepository.save(user);
+//        // Chuyển hướng đến ứng dụng client với access token
+//        return new RedirectView("http://localhost:3000/login/oauth?access_token=" + token.getFirst());
+//    }
 
     private Authentication authenticateUser(String username) {
         Authentication authentication = authenticationManager.authenticate(

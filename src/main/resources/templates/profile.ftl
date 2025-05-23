@@ -1,6 +1,6 @@
 {
+"user_id":"${profileId?c}",
 <#assign first = true>
-
 <#if email?has_content>
     <#if !first>,</#if>"email": "${email}"<#assign first = false>
 </#if>

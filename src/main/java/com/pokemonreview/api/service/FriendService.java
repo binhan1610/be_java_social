@@ -1,21 +1,33 @@
 package com.pokemonreview.api.service;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.schema.ValidationMessage;
+import com.pokemonreview.api.dto.RegisterDTO;
+import com.pokemonreview.api.dto.SearchDTO;
 import com.pokemonreview.api.models.FriendEntity;
+import com.pokemonreview.api.models.ProfileEntity;
 import com.pokemonreview.api.repository.FriendRepository;
+import com.pokemonreview.api.repository.ProfileRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class FriendService {
 
     private final FriendRepository friendRepository;
+    private final ProfileRepository profileRepository;
+    private final ValidatorService validatorService ;
 
-    public FriendService(FriendRepository friendRepository) {
+    public FriendService(FriendRepository friendRepository, ProfileRepository profileRepository, ValidatorService validatorService) {
+        this.profileRepository = profileRepository;
         this.friendRepository = friendRepository;
+        this.validatorService = validatorService;
     }
 
     public ResponseEntity<?> addFriend(Long userId, Long friendId) {
@@ -48,6 +60,17 @@ public class FriendService {
         return ResponseEntity.ok("Đã gửi lời mời kết bạn");
     }
 
+    public ResponseEntity<?> approvalFriend(Long userId, Long friendId) {
+        FriendEntity friendExists = friendRepository.findByIdAndUserId(userId, friendId);
+        if (friendExists == null) {
+            return ResponseEntity.badRequest().body("Không tìm thấy lời mời kết bạn");
+        }
+        friendExists.setStatus(ConstantService.FriendStatus.FRIEND.getValue());
+        friendRepository.save(friendExists);
+
+        return ResponseEntity.ok("Đã kết bạn");
+    }
+
     public ResponseEntity<?> removeFriend(Long userId, Long friendId) {
         FriendEntity friend = friendRepository.findByIdAndUserId(userId, friendId);
         if (friend != null) {
@@ -58,7 +81,35 @@ public class FriendService {
         }
     }
 
-    public List<FriendEntity> getFriendList(Long userId) {
-        return friendRepository.findByUserIdAndStatus(userId, ConstantService.FriendStatus.FRIEND.getValue());
+    public List<ProfileEntity> getInvitedFriendList(Long userId) {
+        List<FriendEntity> invitedFriends = friendRepository.findByUserIdAndStatus(userId, ConstantService.FriendStatus.INVITED.getValue());
+        List<ProfileEntity> invitedFriendProfiles = new ArrayList<>();
+        if(!invitedFriends.isEmpty()) {
+            for(FriendEntity friend : invitedFriends) {
+                long id = friend.getUserId();
+                invitedFriendProfiles.add(profileRepository.findById(id).get());
+            }
+        }
+        return invitedFriendProfiles;
+    }
+
+    public List<ProfileEntity> getFriendList(Long userId) {
+        List<Long> friends = new ArrayList<>();
+        List<FriendEntity> friendsByUserId = friendRepository.findByUserIdAndStatus(userId, ConstantService.FriendStatus.FRIEND.getValue());
+        if(!friendsByUserId.isEmpty()) {
+            for(FriendEntity friend : friendsByUserId) {
+                long id = friend.getId();
+                friends.add(id);
+            }
+        }
+        List<FriendEntity> friendsById = friendRepository.findByIdAndStatus(userId, ConstantService.FriendStatus.FRIEND.getValue());
+        if(!friendsById.isEmpty()) {
+            for(FriendEntity friend : friendsById) {
+                long id = friend.getUserId();
+                friends.add(id);
+            }
+        }
+
+        return profileRepository.findAllById(friends);
     }
 }

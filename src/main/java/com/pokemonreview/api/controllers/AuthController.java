@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -57,15 +57,15 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/google")
-    public RedirectView googleOAuth(@RequestParam String code) throws Exception {
-        return authService.googleOAuthLogin(code);
-    }
-
-    @GetMapping("/facebook")
-    public RedirectView facebookOAuth(@RequestParam String code) throws Exception {
-        return authService.facebookOAuthLogin(code);
-    }
+//    @GetMapping("/google")
+//    public RedirectView googleOAuth(@RequestParam String code) throws Exception {
+//        return authService.googleOAuthLogin(code);
+//    }
+//
+//    @GetMapping("/facebook")
+//    public RedirectView facebookOAuth(@RequestParam String code) throws Exception {
+//        return authService.facebookOAuthLogin(code);
+//    }
 
 
 }

@@ -20,7 +20,7 @@ public class ConstantService {
         String username = authentication.getName();
         UserEntity user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return user.getAccountId();
+        return user.getUserId();
     }
 
     public enum FriendStatus {

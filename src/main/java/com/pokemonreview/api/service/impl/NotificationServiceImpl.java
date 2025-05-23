@@ -62,7 +62,7 @@ public class NotificationServiceImpl implements NotificationService {
                 NotificationEntity notificationEntity = new NotificationEntity();
                 notificationEntity.setTitle(resTitle);
                 notificationEntity.setPayload(resPayload);
-                notificationEntity.setUserId(user.getAccountId());
+                notificationEntity.setUserId(user.getUserId());
                 notificationRepository.save(notificationEntity);
                 return "send noti success";
             }

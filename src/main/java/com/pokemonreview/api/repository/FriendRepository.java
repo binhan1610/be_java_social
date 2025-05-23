@@ -18,4 +18,7 @@ public interface FriendRepository extends JpaRepository<FriendEntity, Long> {
 
     // Tìm bạn bè theo userId và status
     List<FriendEntity> findByUserIdAndStatus(long userId, int status);
+
+    List<FriendEntity> findByIdAndStatus(long id, int status);
+
 }
