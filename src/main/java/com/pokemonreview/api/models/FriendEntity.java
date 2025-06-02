@@ -16,6 +16,9 @@ public class FriendEntity {
     @Id
     private long id;
 
+    @Column(name = "friend_id")
+    private long friendId;
+
     @Column(name = "status")
     private int status;
 

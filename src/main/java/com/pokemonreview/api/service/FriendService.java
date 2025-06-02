@@ -30,7 +30,11 @@ public class FriendService {
         this.validatorService = validatorService;
     }
 
-    public ResponseEntity<?> addFriend(Long userId, Long friendId) {
+    public long getFriendId() throws Exception {
+        return IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.FRIEND);
+    }
+
+    public ResponseEntity<?> addFriend(Long userId, Long friendId) throws Exception {
         FriendEntity friendExists = friendRepository.findByIdAndUserId(userId, friendId);
 
         if (friendExists != null) {
@@ -50,6 +54,7 @@ public class FriendService {
         // Tạo lời mời mới
         long timestamp = new Date().getTime();
         FriendEntity friend = new FriendEntity();
+        friend.setFriendId(getFriendId());
         friend.setId(userId); // Hoặc dùng sequence/id generator
         friend.setUserId(friendId);
         friend.setStatus(ConstantService.FriendStatus.INVITED.getValue());
@@ -61,7 +66,7 @@ public class FriendService {
     }
 
     public ResponseEntity<?> approvalFriend(Long userId, Long friendId) {
-        FriendEntity friendExists = friendRepository.findByIdAndUserId(userId, friendId);
+        FriendEntity friendExists = friendRepository.findByIdAndUserId(friendId, userId);
         if (friendExists == null) {
             return ResponseEntity.badRequest().body("Không tìm thấy lời mời kết bạn");
         }
@@ -86,7 +91,7 @@ public class FriendService {
         List<ProfileEntity> invitedFriendProfiles = new ArrayList<>();
         if(!invitedFriends.isEmpty()) {
             for(FriendEntity friend : invitedFriends) {
-                long id = friend.getUserId();
+                long id = friend.getId();
                 invitedFriendProfiles.add(profileRepository.findById(id).get());
             }
         }
@@ -111,5 +116,28 @@ public class FriendService {
         }
 
         return profileRepository.findAllById(friends);
+    }
+
+    public List<ProfileEntity> search(Long userId, String keyword) {
+        List<Long> friends = new ArrayList<>();
+        List<FriendEntity> friendsByUserId = friendRepository.findByUserIdAndStatus(userId, ConstantService.FriendStatus.FRIEND.getValue());
+        if(!friendsByUserId.isEmpty()) {
+            for(FriendEntity friend : friendsByUserId) {
+                long id = friend.getId();
+                friends.add(id);
+            }
+        }
+        List<FriendEntity> friendsById = friendRepository.findByIdAndStatus(userId, ConstantService.FriendStatus.FRIEND.getValue());
+        if(!friendsById.isEmpty()) {
+            for(FriendEntity friend : friendsById) {
+                long id = friend.getUserId();
+                friends.add(id);
+            }
+        }
+        return profileRepository.searchByUserIdsAndFullNameLike(friends, keyword);
+    }
+
+    public List<ProfileEntity> searchByUserId(Long userId, String keyword) {
+        return profileRepository.searchByFullNameLike(userId, keyword);
     }
 }

@@ -28,6 +28,9 @@ public class ProfileEntity {
     @Column(name = "lastName", nullable = false)
     private String lastName;
 
+    @Column(name = "fullName", nullable = false)
+    private String fullName;
+
     @Column(name = "avatar",nullable = true)
     private String avatar;
 

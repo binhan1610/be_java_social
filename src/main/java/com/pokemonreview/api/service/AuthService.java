@@ -161,13 +161,18 @@ public class AuthService {
                 }
                 existingProfile.setPhoneNumber(profileUpdateDTO.getPhoneNumber());
             }
-
+            boolean fullName = false;
             if (profileUpdateDTO.getFirstName() != null && !profileUpdateDTO.getFirstName().isEmpty()) {
                 existingProfile.setFistName(profileUpdateDTO.getFirstName());
+                fullName = true;
             }
 
             if (profileUpdateDTO.getLastName() != null && !profileUpdateDTO.getLastName().isEmpty()) {
                 existingProfile.setLastName(profileUpdateDTO.getLastName());
+                fullName = true;
+            }
+            if(fullName){
+                existingProfile.setFullName(existingProfile.getFistName()+" "+ existingProfile.getLastName());
             }
 
             if (profileUpdateDTO.getAvatar() != null && !profileUpdateDTO.getAvatar().isEmpty()) {
@@ -225,6 +230,7 @@ public class AuthService {
         profile.setUserId(getProfileId()); // Generate ID
         profile.setFistName(registerRequestDTO.getFirstName());
         profile.setLastName(registerRequestDTO.getLastName());
+        profile.setFullName(registerRequestDTO.getFirstName() + " " + registerRequestDTO.getLastName());
         profile.setSex(registerRequestDTO.getSex());
         if (username.contains("@")) {
             if (profileRepository.findByEmail(username).isPresent()) {

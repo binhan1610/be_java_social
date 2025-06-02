@@ -79,13 +79,25 @@ public class FriendController {
         }
     }
 
-//    @PostMapping("/search")
-//    public ResponseEntity<?> searchFriend(@RequestBody String searchJson) {
-//        try {
-//            long userId = constantService.getUserIdByUsername();
-//
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
-//        }
-//    }
+    @GetMapping("/search/friend/{keyword}")
+    public ResponseEntity<?> searchFriend(@PathVariable String keyword) {
+        try {
+            long userId = constantService.getUserIdByUsername();
+            List<ProfileEntity> friends = friendService.search(userId, keyword);
+            return ResponseEntity.ok(friends);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/search/{keyword}")
+    public ResponseEntity<?> search(@PathVariable String keyword) {
+        try {
+            long userId = constantService.getUserIdByUsername();
+            List<ProfileEntity> friends = friendService.searchByUserId(userId, keyword);
+            return ResponseEntity.ok(friends);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
 }
