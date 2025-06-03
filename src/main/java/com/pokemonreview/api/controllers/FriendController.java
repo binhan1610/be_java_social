@@ -90,6 +90,17 @@ public class FriendController {
         }
     }
 
+    @GetMapping("/{friendId}")
+    public ResponseEntity<?> getFriendId(@PathVariable long friendId) {
+        try {
+            long userId = constantService.getUserIdByUsername();
+            long friend = friendService.getFriendIdByUserId(userId, friendId);
+            return ResponseEntity.ok(friend);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/search/{keyword}")
     public ResponseEntity<?> search(@PathVariable String keyword) {
         try {

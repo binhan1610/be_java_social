@@ -98,6 +98,19 @@ public class FriendService {
         return invitedFriendProfiles;
     }
 
+    public long getFriendIdByUserId(long userId, long friendId) {
+        long id = 0;
+        FriendEntity friend = friendRepository.findByIdAndUserId(userId, userId);
+        if (friend != null) {
+            id = friend.getFriendId() ;
+        }
+        FriendEntity friend1 = friendRepository.findByIdAndUserId(friendId, userId);
+        if (friend1 != null) {
+            id = friend1.getFriendId();
+        }
+        return id;
+    }
+
     public List<ProfileEntity> getFriendList(Long userId) {
         List<Long> friends = new ArrayList<>();
         List<FriendEntity> friendsByUserId = friendRepository.findByUserIdAndStatus(userId, ConstantService.FriendStatus.FRIEND.getValue());
