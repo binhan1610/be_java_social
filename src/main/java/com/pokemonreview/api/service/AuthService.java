@@ -269,7 +269,7 @@ public class AuthService {
     public ResponseEntity<?>
     login(String loginJson) {
         try {
-            notificationService.sendNotification("Facebook", "Có tin nhắn mới", "cnBIhOSekI7Lo9su-FgPus:APA91bGXL5O2JVHU9TSHSpbJeIx30IAacQ31BfWKm-PLqhjc7ht33xBjl1hWu8b3PCswGxNNgmwUV6o_CECCNqxHQfIIsxiKkfXr6wwIheEmBOcTP4r142E");
+//            notificationService.sendNotification("Facebook", "Có tin nhắn mới", "cnBIhOSekI7Lo9su-FgPus:APA91bGXL5O2JVHU9TSHSpbJeIx30IAacQ31BfWKm-PLqhjc7ht33xBjl1hWu8b3PCswGxNNgmwUV6o_CECCNqxHQfIIsxiKkfXr6wwIheEmBOcTP4r142E");
             // Validate the JSON against the schema
             Set<ValidationMessage> errors = validatorService.validate("LoginValidator", loginJson);
             if (!errors.isEmpty()) {
