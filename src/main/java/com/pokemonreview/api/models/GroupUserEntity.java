@@ -15,7 +15,10 @@ import javax.persistence.Table;
 public class GroupUserEntity {
 
     @Id
-    private long id;
+    private long groupId;
+
+    @Column(name = "userId")
+    private long userId;
 
     @Column(name = "name")
     private String name;

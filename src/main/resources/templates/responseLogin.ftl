@@ -1,5 +1,6 @@
 {
 "expireDate": "${expireDate?c}",
 "accessToken": "${accessToken}",
-"tokenType": "Bearer"
+"tokenType": "Bearer",
+"userId": "${userId?c}"
 }

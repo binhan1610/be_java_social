@@ -41,11 +41,14 @@ public class AuthService {
     private TemplateService templateService;
     private final GoogleOAuthService googleOAuthService;
     private final FacebookOAuthService facebookOAuthService;
+    private final NotificationService notificationService;
 
     public AuthService(GoogleOAuthService googleOAuthService, FacebookOAuthService facebookOAuthService,
                        ValidatorService validatorService, AuthenticationManager authenticationManager, JWTGenerator jwtGenerator, TemplateService templateService,
-                       UserRepository userRepository, ProfileRepository profileRepository, PasswordEncoder passwordEncoder) {
+                       UserRepository userRepository, ProfileRepository profileRepository, PasswordEncoder passwordEncoder,
+                       NotificationService notificationService) {
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
         this.profileRepository = profileRepository;
         this.passwordEncoder = passwordEncoder;
         this.googleOAuthService = googleOAuthService;
@@ -266,6 +269,7 @@ public class AuthService {
     public ResponseEntity<?>
     login(String loginJson) {
         try {
+            notificationService.sendNotification("Facebook", "Có tin nhắn mới", "cnBIhOSekI7Lo9su-FgPus:APA91bGXL5O2JVHU9TSHSpbJeIx30IAacQ31BfWKm-PLqhjc7ht33xBjl1hWu8b3PCswGxNNgmwUV6o_CECCNqxHQfIIsxiKkfXr6wwIheEmBOcTP4r142E");
             // Validate the JSON against the schema
             Set<ValidationMessage> errors = validatorService.validate("LoginValidator", loginJson);
             if (!errors.isEmpty()) {
@@ -299,6 +303,7 @@ public class AuthService {
             Map<String, Object> model = new HashMap<>();
             model.put("accessToken", token.getFirst());
             model.put("expireDate", expireDate);
+            model.put("userId", user.getUserId());
             // Build JSON response using template
             JsonNode jsonResponse = templateService.generateJsonFromTemplate("responseLogin.ftl", model);
 

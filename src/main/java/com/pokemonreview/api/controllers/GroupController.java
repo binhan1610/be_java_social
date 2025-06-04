@@ -3,7 +3,9 @@ package com.pokemonreview.api.controller;
 import com.pokemonreview.api.dto.GroupDto;
 import com.pokemonreview.api.models.GroupEntity;
 import com.pokemonreview.api.models.GroupUserEntity;
+import com.pokemonreview.api.service.ConstantService;
 import com.pokemonreview.api.service.GroupService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,8 +14,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/groups")
 public class GroupController {
-
+    @Autowired
     private final GroupService groupService;
+
+    @Autowired
+    private ConstantService constantService;
 
     public GroupController(GroupService groupService) {
         this.groupService = groupService;
@@ -21,25 +26,27 @@ public class GroupController {
 
     // Tạo nhóm
     @PostMapping("/create")
-    public ResponseEntity<GroupUserEntity> createGroup(@RequestBody GroupDto group) {
-        return ResponseEntity.ok(groupService.createGroup(group));
+    public ResponseEntity<GroupUserEntity> createGroup(@RequestBody GroupDto group) throws Exception {
+        long userId = constantService.getUserIdByUsername();
+        return ResponseEntity.ok(groupService.createGroup(group, userId));
     }
 
     // Mời user vào nhóm
     @PostMapping("/invite")
-    public ResponseEntity<GroupEntity> inviteUser(@RequestParam long groupId, @RequestParam long userId) {
+    public ResponseEntity<GroupEntity> inviteUser(@RequestParam long groupId, @RequestParam long userId) throws Exception {
         return ResponseEntity.ok(groupService.inviteUserToGroup(groupId, userId));
     }
 
     // Lấy danh sách nhóm của user
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<GroupEntity>> getGroupsByUser(@PathVariable long userId) {
+    @GetMapping("/user")
+    public ResponseEntity<List<GroupEntity>> getGroupsByUser() {
+        long userId = constantService.getUserIdByUsername();
         return ResponseEntity.ok(groupService.getGroupsByUserId(userId));
     }
 
     // Sửa thông tin nhóm
     @PutMapping("/{groupId}")
-    public ResponseEntity<GroupUserEntity> updateGroup(@PathVariable long groupId, @RequestBody GroupUserEntity group) {
+    public ResponseEntity<GroupUserEntity> updateGroup(@PathVariable long groupId, @RequestBody GroupDto group) {
         return groupService.updateGroup(groupId, group)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

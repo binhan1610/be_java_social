@@ -21,11 +21,16 @@ public class GroupService {
         this.groupRepository = groupRepository;
         this.groupUserRepository = groupUserRepository;
     }
+    public long getGroupId() throws Exception {
+        return IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.GROUP);
+    }
 
     // Tạo nhóm
-    public GroupUserEntity createGroup(GroupDto dto) {
+    public GroupUserEntity createGroup(GroupDto dto, long  userId) throws Exception {
         long timeStamp = new Date().getTime();
         GroupUserEntity group = new GroupUserEntity();
+        group.setGroupId(getGroupId());
+        group.setUserId(userId);
         group.setName(dto.getName());
         group.setGroupAvatar(dto.getGroupAvatar());
         group.setGroupBackground(dto.getGroupBackground());
@@ -39,12 +44,21 @@ public class GroupService {
 
     // Mời user vào nhóm
     public GroupEntity inviteUserToGroup(long groupUserId, long userId) {
+        long timeStamp = new Date().getTime();
         GroupEntity entity = new GroupEntity();
         entity.setGroupId(groupUserId);
         entity.setId(userId); // ID này là ID user
         entity.setStatus(1); // đang tham gia
-        entity.setCreateTime(System.currentTimeMillis());
-        entity.setUpdatedTime(System.currentTimeMillis());
+        entity.setCreateTime(timeStamp);
+        entity.setUpdatedTime(timeStamp);
+        GroupUserEntity groupUser = groupUserRepository.findById(userId).orElse(null);
+        if (groupUser != null) {
+            int totalMember = groupUser.getTotalMember();
+            totalMember += 1;
+            groupUser.setTotalMember(totalMember);
+            groupUser.setUpdatedTime(timeStamp);
+            groupUserRepository.save(groupUser);
+        }
         return groupRepository.save(entity);
     }
 
@@ -54,18 +68,39 @@ public class GroupService {
     }
 
     // Sửa thông tin nhóm
-    public Optional<GroupUserEntity> updateGroup(long id, GroupUserEntity newData) {
+    public Optional<GroupUserEntity> updateGroup(long id, GroupDto newData) {
         return groupUserRepository.findById(id).map(group -> {
-            group.setName(newData.getName());
-            group.setDescription(newData.getDescription());
-            group.setGroupAvatar(newData.getGroupAvatar());
-            group.setGroupBackground(newData.getGroupBackground());
-            group.setType(newData.getType());
-            group.setTotalMember(newData.getTotalMember());
-            group.setUpdatedTime(System.currentTimeMillis());
-            return groupUserRepository.save(group);
+            boolean updated = false;
+
+            if (newData.getName() != null && !newData.getName().equals(group.getName())) {
+                group.setName(newData.getName());
+                updated = true;
+            }
+
+            if (newData.getDescription() != null && !newData.getDescription().equals(group.getDescription())) {
+                group.setDescription(newData.getDescription());
+                updated = true;
+            }
+
+            if (newData.getGroupAvatar() != null && !newData.getGroupAvatar().equals(group.getGroupAvatar())) {
+                group.setGroupAvatar(newData.getGroupAvatar());
+                updated = true;
+            }
+
+            if (newData.getGroupBackground() != null && !newData.getGroupBackground().equals(group.getGroupBackground())) {
+                group.setGroupBackground(newData.getGroupBackground());
+                updated = true;
+            }
+
+            if (updated) {
+                group.setUpdatedTime(System.currentTimeMillis());
+                return groupUserRepository.save(group);
+            }
+
+            return group; // Trả lại bản gốc nếu không có gì thay đổi
         });
     }
+
 
     // Xóa nhóm
     public void deleteGroup(long groupId) {

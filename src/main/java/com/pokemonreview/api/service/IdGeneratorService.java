@@ -9,7 +9,11 @@ public class IdGeneratorService {
     public enum IdentityType {
         USER,
         PROFILE,
-        FRIEND
+        FRIEND,
+        POST,
+        COMMENT,
+        LIKE,
+        GROUP
     }
 
     private static final AtomicLong counter = new AtomicLong(0);

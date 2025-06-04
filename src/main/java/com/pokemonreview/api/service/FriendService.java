@@ -9,13 +9,12 @@ import com.pokemonreview.api.models.FriendEntity;
 import com.pokemonreview.api.models.ProfileEntity;
 import com.pokemonreview.api.repository.FriendRepository;
 import com.pokemonreview.api.repository.ProfileRepository;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class FriendService {
@@ -98,9 +97,9 @@ public class FriendService {
         return invitedFriendProfiles;
     }
 
-    public long getFriendIdByUserId(long userId, long friendId) {
+    public String getFriendIdByUserId(long userId, long friendId) {
         long id = 0;
-        FriendEntity friend = friendRepository.findByIdAndUserId(userId, userId);
+        FriendEntity friend = friendRepository.findByIdAndUserId(userId, friendId);
         if (friend != null) {
             id = friend.getFriendId() ;
         }
@@ -108,7 +107,7 @@ public class FriendService {
         if (friend1 != null) {
             id = friend1.getFriendId();
         }
-        return id;
+        return String.valueOf(id);
     }
 
     public List<ProfileEntity> getFriendList(Long userId) {
@@ -153,4 +152,26 @@ public class FriendService {
     public List<ProfileEntity> searchByUserId(Long userId, String keyword) {
         return profileRepository.searchByFullNameLike(userId, keyword);
     }
+
+    public List<Map<String, String>> convertObject(List<ProfileEntity> list) {
+        List<Map<String, String>> result = new ArrayList<>();
+        for (ProfileEntity profileEntity : list) {
+            Map<String, String> map = new HashMap<>();
+            map.put("userId", String.valueOf(profileEntity.getUserId()));
+            map.put("email", profileEntity.getEmail());
+            map.put("phoneNumber", profileEntity.getPhoneNumber());
+            map.put("fistName", profileEntity.getFistName());
+            map.put("lastName", profileEntity.getLastName());
+            map.put("fullName", profileEntity.getFullName());
+            map.put("avatar", profileEntity.getAvatar());
+            map.put("birthDay", profileEntity.getBirthDay());
+            map.put("address", profileEntity.getAddress());
+            map.put("sex", profileEntity.getSex());
+            map.put("createTime", String.valueOf(profileEntity.getCreateTime()));
+            map.put("updatedTime", String.valueOf(profileEntity.getUpdatedTime()));
+            result.add(map);
+        }
+        return result;
+    }
+
 }

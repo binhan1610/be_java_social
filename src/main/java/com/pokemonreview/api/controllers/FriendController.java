@@ -60,8 +60,7 @@ public class FriendController {
         try {
             long userId = constantService.getUserIdByUsername();
             List<ProfileEntity> friends = friendService.getFriendList(userId);
-
-            return ResponseEntity.ok(friends);
+            return ResponseEntity.ok(friendService.convertObject(friends));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
@@ -73,7 +72,7 @@ public class FriendController {
             long userId = constantService.getUserIdByUsername();
             List<ProfileEntity> friends = friendService.getInvitedFriendList(userId);
 
-            return ResponseEntity.ok(friends);
+            return ResponseEntity.ok(friendService.convertObject(friends));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
@@ -84,7 +83,7 @@ public class FriendController {
         try {
             long userId = constantService.getUserIdByUsername();
             List<ProfileEntity> friends = friendService.search(userId, keyword);
-            return ResponseEntity.ok(friends);
+            return ResponseEntity.ok(friendService.convertObject(friends));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
@@ -94,7 +93,7 @@ public class FriendController {
     public ResponseEntity<?> getFriendId(@PathVariable long friendId) {
         try {
             long userId = constantService.getUserIdByUsername();
-            long friend = friendService.getFriendIdByUserId(userId, friendId);
+            String friend = friendService.getFriendIdByUserId(userId, friendId);
             return ResponseEntity.ok(friend);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
@@ -106,7 +105,7 @@ public class FriendController {
         try {
             long userId = constantService.getUserIdByUsername();
             List<ProfileEntity> friends = friendService.searchByUserId(userId, keyword);
-            return ResponseEntity.ok(friends);
+            return ResponseEntity.ok(friendService.convertObject(friends));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }

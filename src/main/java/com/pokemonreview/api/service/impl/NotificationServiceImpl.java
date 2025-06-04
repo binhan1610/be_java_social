@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.firebase.messaging.*;
 import com.pokemonreview.api.dto.SaveNotiDto;
 import com.pokemonreview.api.models.NotificationEntity;
+import com.pokemonreview.api.models.ProfileEntity;
 import com.pokemonreview.api.models.UserEntity;
 import com.pokemonreview.api.repository.NotificationRepository;
+import com.pokemonreview.api.repository.ProfileRepository;
 import com.pokemonreview.api.repository.UserRepository;
 import com.pokemonreview.api.service.NotificationService;
 import com.pokemonreview.api.service.TemplateService;
@@ -23,9 +25,12 @@ public class NotificationServiceImpl implements NotificationService {
     private UserRepository userRepository;
     private TemplateService templateService;
     private NotificationRepository notificationRepository;
+    private ProfileRepository profileRepository;
 
     @Autowired
-    public NotificationServiceImpl(NotificationRepository notificationRepository,TemplateService templateService,UserRepository userRepository) {
+    public NotificationServiceImpl(NotificationRepository notificationRepository,TemplateService templateService,UserRepository userRepository
+    ,ProfileRepository profileRepository) {
+        this.profileRepository = profileRepository;
         this.userRepository = userRepository;
         this.templateService = templateService;
         this.notificationRepository = notificationRepository;
@@ -42,6 +47,7 @@ public class NotificationServiceImpl implements NotificationService {
         UserEntity user = userRepository.findByFcmToken(fcm_token).orElse(null);
         if(user != null)
         {
+            ProfileEntity profile = profileRepository.findById(user.getUserId()).orElse(null);
             HashMap<String,Object> model = new HashMap<>();
             model.put("title",title);
             model.put("payload",payload);
@@ -53,6 +59,7 @@ public class NotificationServiceImpl implements NotificationService {
                 Notification notification = Notification.builder()
                         .setTitle(resTitle)
                         .setBody(resPayload)
+                        .setImage(profile != null? profile.getAvatar() : null)
                         .build();
                 Message message = Message.builder()
                         .setToken(fcm_token)
