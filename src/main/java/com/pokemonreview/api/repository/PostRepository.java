@@ -13,10 +13,11 @@ import java.util.List;
 @Repository
 public interface PostRepository extends JpaRepository<PostEntity, Long> {
     // JpaRepository đã hỗ trợ sẵn các hàm save, findAll, findById, deleteById
+    @Query("SELECT p FROM PostEntity p WHERE p.id = id")
+    List<PostEntity> findById(@Param("id") long id);
 
-    List<PostEntity> findById(long id);
     PostEntity findByPostId(long id);
 
-    @Query("SELECT p FROM PostEntity p WHERE p.id IN :ids")
+    @Query("SELECT p FROM PostEntity p WHERE p.id IN :ids order by p.createTime desc")
     List<PostEntity> getListPostInIds(@Param("ids") List<Long> ids);
 }

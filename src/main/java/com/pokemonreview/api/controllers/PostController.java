@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -28,9 +29,10 @@ public class PostController {
 
     // Get all posts
     @GetMapping("/all")
-    public List<PostEntity> getAllPosts() throws Exception {
+    public ResponseEntity<?> getAllPosts() throws Exception {
         long userId = constantService.getUserIdByUsername();
-        return postService.getAllPosts(userId);
+        List<Map<String, String>> post = postService.convertPostEntityToMap(postService.getAllPosts(userId));
+        return new ResponseEntity<>(post, HttpStatus.OK);
     }
 
     // Get post by ID
@@ -45,13 +47,10 @@ public class PostController {
 
     // Get post by user
     @GetMapping("")
-    public ResponseEntity<?> getPostMyPost(@PathVariable long id) {
+    public ResponseEntity<?> getPostMyPost() {
         long userId = constantService.getUserIdByUsername();
         List<PostEntity> post = postService.getPostById(userId);
-        if (post == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(post, HttpStatus.OK);
+        return new ResponseEntity<>(postService.convertPostEntityToMap(post), HttpStatus.OK);
     }
 
     // Create a new post

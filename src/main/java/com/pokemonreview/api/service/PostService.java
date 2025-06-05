@@ -8,10 +8,7 @@ import com.pokemonreview.api.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class PostService {
@@ -32,15 +29,16 @@ public class PostService {
     public List<PostEntity> getAllPosts(long userId) throws Exception {
         List<Long> listGroup = groupService.getMyGroup(userId);
         List<Long> ids = new ArrayList<>(listGroup);
+        ids.add(userId);
         List<ProfileEntity> friendEntityList = friendService.getFriendList(userId);
         for(ProfileEntity profile:friendEntityList){
             ids.add(profile.getUserId());
         }
-        return postRepository.findAllById(ids);
+        return postRepository.getListPostInIds(ids);
     }
 
-    public List<PostEntity> getPostById(long postId) {
-        return postRepository.findById(postId);
+    public List<PostEntity> getPostById(long userId) {
+        return postRepository.findById(userId);
     }
 
     public PostEntity createPost(long userId, PostDto postDto, long id) throws Exception {
@@ -56,6 +54,28 @@ public class PostService {
         post.setUpdatedTime(now);
         return postRepository.save(post);
     }
+
+    public List<Map<String, String>> convertPostEntityToMap(List<PostEntity> list) {
+        List<Map<String, String>> result = new ArrayList<>();
+        for (PostEntity post : list) {
+            Map<String, String> map = new HashMap<>();
+            map.put("postId", String.valueOf(post.getPostId()));
+            map.put("userId", String.valueOf(post.getUserId()));
+            map.put("id", String.valueOf(post.getId()));
+
+            // Với list tags và images, convert thành chuỗi JSON hoặc chuỗi nối
+            map.put("tags", post.getTags() != null ? String.join(",", post.getTags()) : null);
+            map.put("images", post.getImages() != null ? String.join(",", post.getImages()) : null);
+
+            map.put("caption", post.getCaption());
+            map.put("createTime", String.valueOf(post.getCreateTime()));
+            map.put("updatedTime", String.valueOf(post.getUpdatedTime()));
+
+            result.add(map);
+        }
+        return result;
+    }
+
 
     public PostEntity updatePost(long postId, PostDto postDto) {
         PostEntity post = postRepository.findByPostId(postId);

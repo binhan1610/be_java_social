@@ -1,12 +1,12 @@
-package com.pokemonreview.api.dto;
+    package com.pokemonreview.api.dto;
 
-import lombok.Data;
+    import lombok.Data;
 
-@Data
-public class PostDto {
-    private String[] tags;
+    @Data
+    public class PostDto {
+        private String[] tags;
 
-    private String[] images;
+        private String[] images;
 
-    private String caption;
-}
+        private String caption;
+    }
