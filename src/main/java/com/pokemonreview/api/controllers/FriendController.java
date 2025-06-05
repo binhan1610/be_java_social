@@ -9,7 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/friend")
@@ -93,7 +95,9 @@ public class FriendController {
         try {
             long userId = constantService.getUserIdByUsername();
             String friend = friendService.getFriendIdByUserId(userId, friendId);
-            return ResponseEntity.ok(friend);
+            Map<String, String> map = new HashMap<>();
+            map.put("roomId", friend);
+            return ResponseEntity.ok(map);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }

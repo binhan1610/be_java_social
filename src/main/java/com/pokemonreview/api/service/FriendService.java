@@ -35,6 +35,7 @@ public class FriendService {
     }
 
     public String getFcmToken(long roomId, long userId){
+        System.out.println(roomId+ " "+userId);
         FriendEntity friend = friendRepository.findByFriendId(roomId);
         if(friend != null){
             long friendId;
