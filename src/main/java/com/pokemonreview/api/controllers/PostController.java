@@ -27,15 +27,27 @@ public class PostController {
     }
 
     // Get all posts
-    @GetMapping
-    public List<PostEntity> getAllPosts() {
-        return postService.getAllPosts();
+    @GetMapping("/all")
+    public List<PostEntity> getAllPosts() throws Exception {
+        long userId = constantService.getUserIdByUsername();
+        return postService.getAllPosts(userId);
     }
 
     // Get post by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getPostById(@PathVariable long id) {
         List<PostEntity> post = postService.getPostById(id);
+        if (post == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(post, HttpStatus.OK);
+    }
+
+    // Get post by user
+    @GetMapping("")
+    public ResponseEntity<?> getPostMyPost(@PathVariable long id) {
+        long userId = constantService.getUserIdByUsername();
+        List<PostEntity> post = postService.getPostById(userId);
         if (post == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

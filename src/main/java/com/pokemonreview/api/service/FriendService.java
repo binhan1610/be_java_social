@@ -81,7 +81,14 @@ public class FriendService {
             friendRepository.delete(friend);
             return ResponseEntity.ok("Đã hủy kết bạn");
         } else {
-            return ResponseEntity.status(404).body("Không tồn tại mối quan hệ để hủy");
+            FriendEntity friend1 = friendRepository.findByIdAndUserId(friendId, userId);
+            if(friend1!= null){
+                friendRepository.delete(friend1);
+                return ResponseEntity.ok("Đã hủy kết bạn");
+            }
+            else {
+                return ResponseEntity.status(404).body("Không tồn tại mối quan hệ để hủy");
+            }
         }
     }
 

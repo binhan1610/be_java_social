@@ -7,6 +7,7 @@ import com.pokemonreview.api.repository.GroupRepository;
 import com.pokemonreview.api.repository.GroupUserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,15 @@ public class GroupService {
     }
     public long getGroupId() throws Exception {
         return IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.GROUP);
+    }
+
+    public List<Long> getMyGroup(long userId) throws Exception {
+        List<GroupEntity> list = groupRepository.findAllById(List.of(userId));
+        List<Long> ids = new ArrayList<>();
+        for(GroupEntity group:list){
+            ids.add(group.getGroupId());
+        }
+        return ids;
     }
 
     // Tạo nhóm

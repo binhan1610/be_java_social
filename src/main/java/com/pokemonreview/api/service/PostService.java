@@ -1,11 +1,14 @@
 package com.pokemonreview.api.service;
 
 import com.pokemonreview.api.dto.PostDto;
+import com.pokemonreview.api.models.FriendEntity;
 import com.pokemonreview.api.models.PostEntity;
+import com.pokemonreview.api.models.ProfileEntity;
 import com.pokemonreview.api.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -16,12 +19,24 @@ public class PostService {
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private FriendService friendService;
+
+    @Autowired
+    private GroupService groupService;
+
     public long getPostId() throws Exception {
         return IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.POST);
     }
 
-    public List<PostEntity> getAllPosts() {
-        return postRepository.findAll();
+    public List<PostEntity> getAllPosts(long userId) throws Exception {
+        List<Long> listGroup = groupService.getMyGroup(userId);
+        List<Long> ids = new ArrayList<>(listGroup);
+        List<ProfileEntity> friendEntityList = friendService.getFriendList(userId);
+        for(ProfileEntity profile:friendEntityList){
+            ids.add(profile.getUserId());
+        }
+        return postRepository.findAllById(ids);
     }
 
     public List<PostEntity> getPostById(long postId) {
