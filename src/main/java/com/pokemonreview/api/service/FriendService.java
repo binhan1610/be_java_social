@@ -7,8 +7,10 @@ import com.pokemonreview.api.dto.RegisterDTO;
 import com.pokemonreview.api.dto.SearchDTO;
 import com.pokemonreview.api.models.FriendEntity;
 import com.pokemonreview.api.models.ProfileEntity;
+import com.pokemonreview.api.models.UserEntity;
 import com.pokemonreview.api.repository.FriendRepository;
 import com.pokemonreview.api.repository.ProfileRepository;
+import com.pokemonreview.api.repository.UserRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +24,28 @@ public class FriendService {
     private final FriendRepository friendRepository;
     private final ProfileRepository profileRepository;
     private final ValidatorService validatorService ;
+    private final UserRepository userRepository;
 
-    public FriendService(FriendRepository friendRepository, ProfileRepository profileRepository, ValidatorService validatorService) {
+    public FriendService(UserRepository userRepository,FriendRepository friendRepository,
+                         ProfileRepository profileRepository, ValidatorService validatorService) {
         this.profileRepository = profileRepository;
         this.friendRepository = friendRepository;
         this.validatorService = validatorService;
+        this.userRepository = userRepository;
+    }
+
+    public String getFcmToken(long roomId, long userId){
+        FriendEntity friend = friendRepository.findByFriendId(roomId);
+        if(friend != null){
+            long friendId;
+            if(friend.getUserId() != userId){
+                friendId = friend.getUserId();
+            }
+            else friendId = friend.getId();
+            UserEntity user = userRepository.findByUserId(friendId);
+            if(user != null && user.getFcmToken()!= null) return user.getFcmToken();
+        }
+        return "";
     }
 
     public long getFriendId() throws Exception {

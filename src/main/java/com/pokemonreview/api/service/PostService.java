@@ -2,6 +2,7 @@ package com.pokemonreview.api.service;
 
 import com.pokemonreview.api.dto.PostDto;
 import com.pokemonreview.api.models.FriendEntity;
+import com.pokemonreview.api.models.LikeEntity;
 import com.pokemonreview.api.models.PostEntity;
 import com.pokemonreview.api.models.ProfileEntity;
 import com.pokemonreview.api.repository.PostRepository;
@@ -18,6 +19,9 @@ public class PostService {
 
     @Autowired
     private FriendService friendService;
+
+    @Autowired
+    private LikeService likeService;
 
     @Autowired
     private GroupService groupService;
@@ -38,7 +42,11 @@ public class PostService {
     }
 
     public List<PostEntity> getPostById(long userId) {
-        return postRepository.findById(userId);
+            return postRepository.findById(userId);
+    }
+
+    public PostEntity getPostByPostId(long postId) {
+        return postRepository.findByPostId(postId);
     }
 
     public PostEntity createPost(long userId, PostDto postDto, long id) throws Exception {
@@ -55,10 +63,11 @@ public class PostService {
         return postRepository.save(post);
     }
 
-    public List<Map<String, String>> convertPostEntityToMap(List<PostEntity> list) {
+    public List<Map<String, String>> convertPostEntityToMap(List<PostEntity> list, long userId) throws Exception {
         List<Map<String, String>> result = new ArrayList<>();
         for (PostEntity post : list) {
             Map<String, String> map = new HashMap<>();
+            map = likeService.getCountByPostId(post.getPostId(), userId, map);
             map.put("postId", String.valueOf(post.getPostId()));
             map.put("userId", String.valueOf(post.getUserId()));
             map.put("id", String.valueOf(post.getId()));

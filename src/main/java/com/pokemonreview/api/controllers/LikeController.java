@@ -26,7 +26,7 @@ public class LikeController {
     }
 
     @DeleteMapping("/{rootId}")
-    public ResponseEntity<String> removeLike(@RequestParam long rootId) {
+    public ResponseEntity<String> removeLike(@PathVariable long rootId) {
         long userId = constantService.getUserIdByUsername();
         likeService.removeLike(userId, rootId);
         return ResponseEntity.ok("Like removed successfully.");

@@ -1,4 +1,4 @@
-package com.pokemonreview.api.controller;
+package com.pokemonreview.api.controllers;
 
 import com.pokemonreview.api.dto.CommentDto;
 import com.pokemonreview.api.models.CommentEntity;
@@ -18,8 +18,14 @@ public class CommentController {
     @Autowired
     private ConstantService constantService;
 
+    @GetMapping("/{postId}")
+    private ResponseEntity<?> getComment(@PathVariable long postId) throws Exception {
+        long userId = constantService.getUserIdByUsername();
+        return ResponseEntity.ok(commentService.getList(postId));
+    }
+
     @PostMapping("/add")
-    public ResponseEntity<CommentEntity> addComment(@RequestBody CommentDto request) throws Exception{
+    public ResponseEntity<?> addComment(@RequestBody CommentDto request) throws Exception{
         long userId = constantService.getUserIdByUsername();
         CommentEntity comment = commentService.addComment(
                 userId,

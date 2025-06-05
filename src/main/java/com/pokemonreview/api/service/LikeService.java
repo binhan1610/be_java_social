@@ -5,6 +5,9 @@ import com.pokemonreview.api.repository.LikeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
+
 @Service
 public class LikeService {
 
@@ -14,6 +17,16 @@ public class LikeService {
     public long getLikeId() throws Exception {
         return IdGeneratorService.generateNewId(IdGeneratorService.IdentityType.LIKE);
     }
+
+    public Map<String, String> getCountByPostId(long postId, long userId,Map<String, String> map) throws Exception{
+        List<LikeEntity> list = likeRepository.findByRootId(postId);
+        int count = list.size();
+        map.put("count_like",String.valueOf(count));
+        LikeEntity like = likeRepository.findByUserIdAndRootId(userId, postId);
+        map.put("is_like", like != null ? "true" : "false");
+        return map;
+    }
+
     public LikeEntity addLike(long userId, long rootId, int type) throws Exception {
         // Kiểm tra nếu like đã tồn tại thì trả lại
         LikeEntity like = likeRepository.findByUserIdAndRootId(userId, rootId);
@@ -34,6 +47,9 @@ public class LikeService {
     }
 
     public void removeLike(long userId, long rootId) {
-        likeRepository.deleteByUserIdAndRootId(userId, rootId);
+        LikeEntity like = likeRepository.findByUserIdAndRootId(userId, rootId);
+        if(like!=null){
+            likeRepository.delete(like);
+        }
     }
 }

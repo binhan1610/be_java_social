@@ -11,7 +11,12 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.pokemonreview.api.dto.ChatDto;
 import com.pokemonreview.api.dto.JoinRoomDto;
 import com.pokemonreview.api.models.ChatEntity;
+import com.pokemonreview.api.models.UserEntity;
 import com.pokemonreview.api.repository.ChatRepository;
+import com.pokemonreview.api.repository.UserRepository;
+import com.pokemonreview.api.service.FriendService;
+import com.pokemonreview.api.service.NotificationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -23,9 +28,18 @@ public class SocketIoService {
 
     private SocketIOServer server;
     private ChatRepository chatRepository;
+    private UserRepository userRepository;
 
-    public SocketIoService(ChatRepository chatRepository) {
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private FriendService friendService;
+
+    public SocketIoService(ChatRepository chatRepository,
+                           UserRepository userRepository) {
         this.chatRepository = chatRepository;
+        this.userRepository = userRepository;
     }
     @PostConstruct
     public void startServer() {
@@ -88,7 +102,12 @@ public class SocketIoService {
                 chat.setCreateTime(timeStamp);
                 chat.setUpdateTime(timeStamp);
                 chatRepository.save(chat);
-                System.out.println(chat);
+                String fcmToken = friendService.getFcmToken(roomId, userId);
+                System.out.println(fcmToken);
+                if(!fcmToken.isEmpty()){
+
+                    notificationService.sendNotification("Facebook", "Có tin nhắn mới", fcmToken);
+                }
                 server.getRoomOperations(String.valueOf(roomId)).sendEvent("message_response", chat);
             }
         });

@@ -31,26 +31,30 @@ public class PostController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllPosts() throws Exception {
         long userId = constantService.getUserIdByUsername();
-        List<Map<String, String>> post = postService.convertPostEntityToMap(postService.getAllPosts(userId));
+        List<Map<String, String>> post = postService.convertPostEntityToMap(postService.getAllPosts(userId), userId);
         return new ResponseEntity<>(post, HttpStatus.OK);
     }
 
     // Get post by ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getPostById(@PathVariable long id) {
+    public ResponseEntity<?> getPostById(@PathVariable long id) throws Exception{
         List<PostEntity> post = postService.getPostById(id);
-        if (post == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(post, HttpStatus.OK);
+        return new ResponseEntity<>(postService.convertPostEntityToMap(post, constantService.getUserIdByUsername()), HttpStatus.OK);
     }
+
+    @GetMapping("post/{id}")
+    public ResponseEntity<?> getPostByPostId(@PathVariable long id) throws Exception {
+        PostEntity post = postService.getPostByPostId(id);
+        return new ResponseEntity<>(postService.convertPostEntityToMap(List.of(post), constantService.getUserIdByUsername()), HttpStatus.OK);
+    }
+
 
     // Get post by user
     @GetMapping("")
-    public ResponseEntity<?> getPostMyPost() {
+    public ResponseEntity<?> getPostMyPost() throws Exception {
         long userId = constantService.getUserIdByUsername();
         List<PostEntity> post = postService.getPostById(userId);
-        return new ResponseEntity<>(postService.convertPostEntityToMap(post), HttpStatus.OK);
+        return new ResponseEntity<>(postService.convertPostEntityToMap(post, userId), HttpStatus.OK);
     }
 
     // Create a new post

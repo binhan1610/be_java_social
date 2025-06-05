@@ -293,7 +293,9 @@ public class AuthService {
             // Update user information
             UserEntity user = userRepository.findByUsername(loginDto.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
-
+            ProfileEntity profile = profileRepository.findById(user.getUserId()).orElseThrow(
+                    () -> new RuntimeException("User not found")
+            );
             user.setToken(token.getFirst());
             user.setFcmToken(loginDto.getFcm_token());
             userRepository.save(user);
@@ -304,6 +306,7 @@ public class AuthService {
             model.put("accessToken", token.getFirst());
             model.put("expireDate", expireDate);
             model.put("userId", user.getUserId());
+            model.put("fullName", profile.getFullName());
             // Build JSON response using template
             JsonNode jsonResponse = templateService.generateJsonFromTemplate("responseLogin.ftl", model);
 
