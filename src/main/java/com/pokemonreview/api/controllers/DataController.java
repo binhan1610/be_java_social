@@ -43,7 +43,8 @@ public class DataController {
         return data.getData();
     }
 
-    @GetMapping("/export")
+    @GetMapping("/" +
+            "")
     public ResponseEntity<byte[]> export(@RequestParam int type,
                                          @RequestParam int limit,
                                          @RequestParam int offset) throws Exception {
