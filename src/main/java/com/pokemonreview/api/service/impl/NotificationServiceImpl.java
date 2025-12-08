@@ -65,7 +65,7 @@ public class NotificationServiceImpl implements NotificationService {
                         .setToken(fcm_token)
                         .setNotification(notification)
                         .build();
-                String response = FirebaseMessaging.getInstagitsend(message);
+                String response = FirebaseMessaging.getInstance().send(message);
                 NotificationEntity notificationEntity = new NotificationEntity();
                 notificationEntity.setTitle(resTitle);
                 notificationEntity.setPayload(resPayload);
