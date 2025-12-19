@@ -33,8 +33,9 @@ public class SocketIoService {
     public void startServer() {
         Configuration config = new Configuration();
         config.setHostname("localhost");
-        config.setPort(9092);
+        config.setPort(9094);
         config.setOrigin("http://localhost:8080");
+        config.setOrigin("*");
         server = new SocketIOServer(config);
 
         // Lắng nghe khi có kết nối từ client
@@ -53,33 +54,17 @@ public class SocketIoService {
             }
         });
 
-        server.addEventListener("join_chat_user", JoinRoomDto.class, new DataListener<JoinRoomDto>() {
-            @Override
-            public void onData(SocketIOClient socketIOClient, JoinRoomDto data, AckRequest ackRequest) throws Exception {
-                long roomId = data.getId();
-                long userId = data.getUserId();
-
-                socketIOClient.joinRoom(String.valueOf(roomId));
-                System.out.println("User " + userId + " joined room: " + roomId);
-            }
-        });
-
-
-        server.addEventListener("join_chat_group", JoinRoomDto.class, new DataListener<JoinRoomDto>() {
-            @Override
-            public void onData(SocketIOClient socketIOClient, JoinRoomDto data, AckRequest ackRequest) throws Exception {
-                long roomId = data.getId();
-                long userId = data.getUserId();
-
-                socketIOClient.joinRoom(String.valueOf(roomId));
-                System.out.println("User " + userId + " joined room: " + roomId);
-            }
-        });
-
         server.start();
         System.out.println("Socket.IO server started on port 9092");
     }
 
+    public void sendData(String topic, Object data) {
+        if (server != null) {
+            server.getBroadcastOperations().sendEvent(topic, data);
+
+            System.out.println("Sent socket event: " + topic);
+        }
+    }
     @PreDestroy
     public void stopServer() {
         if (server != null) {

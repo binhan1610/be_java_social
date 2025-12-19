@@ -1,6 +1,11 @@
 package com.pokemonreview.api.service;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.pokemonreview.api.models.DataEntity;
+import com.pokemonreview.api.models.UserEntity;
+import com.pokemonreview.api.repository.UserRepository;
+import com.pokemonreview.api.socketio.SocketIoService;
 import org.eclipse.paho.client.mqttv3.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,11 +15,16 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+
 @Service
 public class MqttService {
+    @Autowired
+    private SocketIoService socketIoService;
 
     private final String broker = "h066391a.ala.asia-southeast1.emqxsl.com";
     private final int port = 8883;
@@ -30,10 +40,13 @@ public class MqttService {
 
     private MqttClient client;
     private final DataService dataService;
-
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
     @Autowired
-    public MqttService(DataService dataService) {
+    public MqttService(DataService dataService, NotificationService notificationService, UserRepository userRepository) {
         this.dataService = dataService;
+        this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public void connect() {
@@ -73,12 +86,61 @@ public class MqttService {
 
                 @Override
                 public void messageArrived(String topic, MqttMessage message) {
+                    if(topic.equals("/doan/air_quality/system_info")){
+                        JsonObject root = JsonParser.parseString(message.toString()).getAsJsonObject();
+
+                        double ramPercent = 0;
+                        double diskPercent = 0;
+                        double cpuPercent = 0;
+                        // --- TÍNH TOÁN RAM ---
+                        if (root.has("ram_usage")) {
+                            JsonObject ram = root.getAsJsonObject("ram_usage");
+                            long totalRam = ram.get("total").getAsLong();
+                            long usedRam = ram.get("used").getAsLong();
+
+                            ramPercent = (double) usedRam / totalRam * 100;
+
+                        }
+
+                        // --- TÍNH TOÁN DISK (ROOT) ---
+                        if (root.has("root_info")) {
+                            JsonObject disk = root.getAsJsonObject("root_info");
+                            long totalDisk = disk.get("flash_total").getAsLong(); // JSON bạn ghi là flash_total
+                            long usedDisk = disk.get("used").getAsLong();
+
+                            diskPercent = (double) usedDisk / totalDisk * 100;
+
+                        }
+
+                        // --- LẤY CPU ---
+                        if (root.has("cpu_usage")) {
+                            JsonObject cpu = root.getAsJsonObject("cpu_usage");
+                            cpuPercent = cpu.get("usage_percent").getAsDouble();
+
+                        }
+                        if(ramPercent != 80 || diskPercent != 80 || cpuPercent != 80){
+//                        if(ramPercent >= 80 || diskPercent >= 80 || cpuPercent >= 80){
+                            List<UserEntity> list = userRepository.findAll();
+                            List<String> listFcm = new ArrayList<>();
+                            for (UserEntity user : list){
+                                if(user.getFcmToken() != null){
+                                    listFcm.add(user.getFcmToken());
+                                }
+                            }
+                            notificationService.sendNotificationMul(
+                                    "Cảnh báo vượt quá tài nguyên",
+                                         String .format("cpu: %s, disk: %s, ram: %s", cpuPercent, diskPercent, ramPercent),
+                                    listFcm
+                            );
+                        }
+                    }
                     long timestamp = new Date().getTime();
                     DataEntity entity = new DataEntity();
                     entity.setId(timestamp);
                     entity.setTopic(topic);
                     entity.setData(message.toString());
                     dataService.saveData(entity);
+                    socketIoService.sendData(topic, message.toString());
                     System.out.println("[MQTT] Message from " + topic + ": " + message.toString());
                 }
 

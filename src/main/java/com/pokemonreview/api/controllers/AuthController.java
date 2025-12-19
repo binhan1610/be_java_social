@@ -1,5 +1,7 @@
 package com.pokemonreview.api.controllers;
 
+import com.pokemonreview.api.models.UserEntity;
+import com.pokemonreview.api.repository.UserRepository;
 import com.pokemonreview.api.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -11,17 +13,41 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
 
     private AuthService authService;
-
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Autowired
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, UserRepository userRepository,
+                          NotificationService notificationService) {
         this.authService = authService;
+        this.userRepository = userRepository;
+        this.notificationService = notificationService;
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<?> test() {
+        List<UserEntity> list = userRepository.findAll();
+        List<String> listFcm = new ArrayList<>();
+        for (UserEntity user : list){
+            if(user.getFcmToken() != null && !user.getFcmToken().isEmpty()){
+                listFcm.add(user.getFcmToken());
+            }
+        }
+        notificationService.sendNotificationMul(
+                "Cảnh báo vượt quá tài nguyên",
+                String .format("cpu: %s, disk: %s, ram: %s", 80, 80, 80),
+                listFcm
+        );
+        return ResponseEntity.ok("hehe");
     }
 
     @PostMapping("/logout")
@@ -40,7 +66,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody String loginJson) {
         try {
-            // Gửi logic xử lý tới AuthService
             return authService.login(loginJson);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
