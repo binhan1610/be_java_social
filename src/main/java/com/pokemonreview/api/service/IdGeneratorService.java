@@ -35,8 +35,6 @@ public class IdGeneratorService {
         // Lấy giá trị counter duy nhất
         long uniqueCounter = counter.incrementAndGet() & 0xFFFFFF; // Counter lưu tối đa 24 bit (16 triệu giá trị)
 
-        // Tổng hợp ID dựa trên các tham số:
-        // Cấu trúc: | 8-bit identityCode | 12-bit shardId | 24-bit uniqueCounter | 20-bit timestamp-based sequence |
         return (identityCode << 56)         // Identity code (8-bit)
                 | ((shardId & 0xFFF) << 44) // Shard ID (12-bit)
                 | ((uniqueCounter & 0xFFFFFF) << 20) // Unique counter (24-bit)
@@ -45,13 +43,11 @@ public class IdGeneratorService {
 
 
     private static long getShardId() {
-        // Giả định đây là shardId được lấy từ cấu hình hệ thống
         return 1L;
     }
 
 
     private static long getDefaultTime() {
-        // Giả định đây là thời điểm ban đầu từ cấu hình hệ thống (01-01-2020)
-        return 1577836800000L; // 01-01-2020 (epoch time in milliseconds)
+        return 1577836800000L;
     }
 }

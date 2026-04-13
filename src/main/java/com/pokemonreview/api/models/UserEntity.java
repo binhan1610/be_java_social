@@ -31,12 +31,6 @@ public class UserEntity {
     @Column(name="fcmToken",nullable = true)
     private String fcmToken;
 
-    @Column(name = "google_id", unique = true,nullable = true)
-    private String googleId;
-
-    @Column(name = "facebook_id", unique = true,nullable = true)
-    private String facebookId;
-
     @Column(name = "createTime", nullable = false, updatable = false)
     private long createTime;
 

@@ -2,7 +2,6 @@ package com.pokemonreview.api.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.firebase.messaging.*;
-import com.pokemonreview.api.dto.SaveNotiDto;
 import com.pokemonreview.api.models.NotificationEntity;
 import com.pokemonreview.api.models.ProfileEntity;
 import com.pokemonreview.api.models.UserEntity;
@@ -16,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -65,7 +63,7 @@ public class NotificationServiceImpl implements NotificationService {
                         .setToken(fcm_token)
                         .setNotification(notification)
                         .build();
-                String response = FirebaseMessaging.getInstagitsend(message);
+                String response = FirebaseMessaging.getInstance().send(message);
                 NotificationEntity notificationEntity = new NotificationEntity();
                 notificationEntity.setTitle(resTitle);
                 notificationEntity.setPayload(resPayload);

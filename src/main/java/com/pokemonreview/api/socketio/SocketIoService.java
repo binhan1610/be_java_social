@@ -1,44 +1,28 @@
 package com.pokemonreview.api.socketio;
 
-
-import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.ConnectListener;
-import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
 import com.corundumstudio.socketio.SocketIOClient;
-import com.pokemonreview.api.dto.ChatDto;
-import com.pokemonreview.api.dto.JoinRoomDto;
-import com.pokemonreview.api.models.ChatEntity;
-import com.pokemonreview.api.models.UserEntity;
-import com.pokemonreview.api.repository.ChatRepository;
 import com.pokemonreview.api.repository.UserRepository;
-import com.pokemonreview.api.service.FriendService;
 import com.pokemonreview.api.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Date;
 
 @Component
 public class SocketIoService {
 
     private SocketIOServer server;
-    private ChatRepository chatRepository;
     private UserRepository userRepository;
 
     @Autowired
     private NotificationService notificationService;
 
-    @Autowired
-    private FriendService friendService;
-
-    public SocketIoService(ChatRepository chatRepository,
-                           UserRepository userRepository) {
-        this.chatRepository = chatRepository;
+    public SocketIoService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
     @PostConstruct
@@ -62,71 +46,6 @@ public class SocketIoService {
             @Override
             public void onDisconnect(SocketIOClient client) {
                 System.out.println("Client disconnected: " + client.getSessionId());
-            }
-        });
-
-        server.addEventListener("join_chat_user", JoinRoomDto.class, new DataListener<JoinRoomDto>() {
-            @Override
-            public void onData(SocketIOClient socketIOClient, JoinRoomDto data, AckRequest ackRequest) throws Exception {
-                long roomId = data.getId();
-                long userId = data.getUserId();
-
-                socketIOClient.joinRoom(String.valueOf(roomId));
-                System.out.println("User " + userId + " joined room: " + roomId);
-            }
-        });
-
-
-        server.addEventListener("join_chat_group", JoinRoomDto.class, new DataListener<JoinRoomDto>() {
-            @Override
-            public void onData(SocketIOClient socketIOClient, JoinRoomDto data, AckRequest ackRequest) throws Exception {
-                long roomId = data.getId();
-                long userId = data.getUserId();
-
-                socketIOClient.joinRoom(String.valueOf(roomId));
-                System.out.println("User " + userId + " joined room: " + roomId);
-            }
-        });
-
-        server.addEventListener("send_message_user", ChatDto.class, new DataListener<ChatDto>() {
-            @Override
-            public void onData(SocketIOClient socketIOClient, ChatDto data, AckRequest ackRequest) throws Exception {
-                long userId = data.getUserId();
-                long roomId = data.getId();
-                String content = data.getContent();
-                long timeStamp = new Date().getTime();
-                ChatEntity chat = new ChatEntity();
-                chat.setContent(content);
-                chat.setUserId(userId);
-                chat.setId(roomId);
-                chat.setCreateTime(timeStamp);
-                chat.setUpdateTime(timeStamp);
-                chatRepository.save(chat);
-                String fcmToken = friendService.getFcmToken(roomId, userId);
-                System.out.println(fcmToken);
-                if(!fcmToken.isEmpty()){
-
-                    notificationService.sendNotification("Facebook", "Có tin nhắn mới", fcmToken);
-                }
-                server.getRoomOperations(String.valueOf(roomId)).sendEvent("message_response", chat);
-            }
-        });
-
-        server.addEventListener("send_message_group", ChatDto.class, new DataListener<ChatDto>() {
-            @Override
-            public void onData(SocketIOClient socketIOClient, ChatDto data, AckRequest ackRequest) throws Exception {
-                long userId = data.getUserId();
-                long roomId = data.getId();
-                String content = data.getContent();
-                long timeStamp = new Date().getTime();
-                ChatEntity chat = new ChatEntity();
-                chat.setContent(content);
-                chat.setUserId(userId);
-                chat.setId(roomId);
-                chat.setCreateTime(timeStamp);
-                chat.setUpdateTime(timeStamp);
-                chatRepository.save(chat);
-                server.getRoomOperations(String.valueOf(roomId)).sendEvent("message_response", chat);
             }
         });
 

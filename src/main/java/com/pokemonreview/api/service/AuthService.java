@@ -22,7 +22,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -39,24 +38,19 @@ public class AuthService {
     private AuthenticationManager authenticationManager;
     private JWTGenerator jwtGenerator;
     private TemplateService templateService;
-    private final GoogleOAuthService googleOAuthService;
-    private final FacebookOAuthService facebookOAuthService;
     private final NotificationService notificationService;
 
-    public AuthService(GoogleOAuthService googleOAuthService, FacebookOAuthService facebookOAuthService,
-                       ValidatorService validatorService, AuthenticationManager authenticationManager, JWTGenerator jwtGenerator, TemplateService templateService,
+    public AuthService(ValidatorService validatorService, AuthenticationManager authenticationManager, JWTGenerator jwtGenerator, TemplateService templateService,
                        UserRepository userRepository, ProfileRepository profileRepository, PasswordEncoder passwordEncoder,
                        NotificationService notificationService) {
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.profileRepository = profileRepository;
         this.passwordEncoder = passwordEncoder;
-        this.googleOAuthService = googleOAuthService;
         this.validatorService = validatorService;
         this.authenticationManager = authenticationManager;
         this.jwtGenerator = jwtGenerator;
         this.templateService = templateService;
-        this.facebookOAuthService = facebookOAuthService;
     }
 
     public long getUserId() throws Exception {
