@@ -13,10 +13,10 @@ import javax.persistence.*;
 @Data
 public class MeterReading {
     @Id
-    private Long meterReadingId;
+    private long meterReadingId;
 
-    private Long workspaceId;
-    private Long roomId;
+    private long workspaceId;
+    private long roomId;
     private int month;
     private int year;
     private int electricOld;

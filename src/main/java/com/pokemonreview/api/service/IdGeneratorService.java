@@ -1,50 +1,51 @@
 package com.pokemonreview.api.service;
 
+import lombok.Getter;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IdGeneratorService {
 
+    // 1. Thêm int prefix vào Enum
+    @Getter
     public enum IdentityType {
-        BUILDING,      // 0
-        ROOM,          // 1
-        TENANT,        // 2
-        CONTRACT,      // 3
-        SERVICE,       // 4
-        METER_READING, // 5
-        INVOICE,       // 6
-        WORKSPACE,     // 7
-        USER           // 8
+        WORKSPACE(1),
+        BUILDING(2),
+        ROOM(3),
+        TENANT(4),
+        CONTRACT(5),
+        SERVICE(6),
+        METER_READING(7),
+        INVOICE(8),
+        USER(9);
+
+        private final int prefix;
+
+        IdentityType(int prefix) {
+            this.prefix = prefix;
+        }
     }
 
     private static final AtomicLong counter = new AtomicLong(0);
-
-    // Epoch: 2020-01-01 00:00:00 UTC (1577836800000L)
-    private static final long DEFAULT_TIME = 1577836800000L;
+    private static final long DEFAULT_TIME = 1577836800000L; // Epoch 2020
 
     public static long generateNewId(IdentityType identityType) {
         long shardId = getShardId();
-        long sequence = System.currentTimeMillis() - DEFAULT_TIME;
+        long sequence = (System.currentTimeMillis() - DEFAULT_TIME) / 1000;
 
-        return getObjectId(identityType, shardId, sequence);
+        return getObjectId(identityType.getPrefix(), shardId, sequence);
     }
 
-    private static long getObjectId(IdentityType identityType, long shardId, long sequence) {
-        // identityCode (8-bit): Tối đa 255 loại bảng
-        long identityCode = identityType.ordinal() & 0xFF;
+    private static long getObjectId(int prefix, long shardId, long sequence) {
+        long uniqueCounter = counter.incrementAndGet() & 0xFFF;
 
-        // uniqueCounter (14-bit): Tối đa 16,383 ID mỗi mili giây (Tránh tràn 64 bit)
-        long uniqueCounter = counter.incrementAndGet() & 0x3FFF;
 
-        // Tối ưu cấu trúc 64-bit ID:
-        // [1 bit dấu][8 bit Type][10 bit Shard][31 bit Timestamp][14 bit Counter]
-        return (identityCode << 55)            // Identity code (Bit 55-62)
-                | ((shardId & 0x3FF) << 45)    // Shard ID (Bit 45-54) - Tối đa 1024 Shards
-                | ((sequence & 0x7FFFFFFF) << 14) // Timestamp (31-bit) - Dùng được ~68 năm
-                | (uniqueCounter & 0x3FFF);    // Counter (14-bit)
+        return ((long) (prefix & 0x7F) << 56)
+                | ((shardId & 0x3FF) << 46)             // Shard ID (10-bit)
+                | ((sequence & 0x3FFFFFFFFL) << 12)     // Timestamp (34-bit) ~ 500 năm
+                | (uniqueCounter & 0xFFF);              // Counter (12-bit)
     }
 
     private static long getShardId() {
-        // Có thể lấy từ Environment Variable hoặc Config file
         return 1L;
     }
 }

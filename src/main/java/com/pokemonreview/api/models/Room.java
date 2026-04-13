@@ -13,12 +13,12 @@ import javax.persistence.*;
 @NoArgsConstructor
 public class Room {
     @Id
-    private Long roomId;
+    private long roomId;
 
-    private Long workspaceId;
-    private Long buildingId;
+    private long workspaceId;
+    private long buildingId;
     private String name;
-    private double price;
+    private long price;
     private String status;
     private int maxCapacity;
     private long createTime;

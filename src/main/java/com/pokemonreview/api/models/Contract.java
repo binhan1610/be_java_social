@@ -13,14 +13,14 @@ import javax.persistence.*;
 @Data
 public class Contract {
     @Id
-    private Long contractId;
+    private long contractId;
 
-    private Long workspaceId;
-    private Long roomId;
-    private Long tenantId;
+    private long workspaceId;
+    private long roomId;
+    private long tenantId;
     private long startDate;
     private long endDate;
-    private double depositAmount;
+    private long depositAmount;
     private String status;
     private long createTime;
     private long updateTime;

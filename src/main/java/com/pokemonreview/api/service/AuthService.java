@@ -9,8 +9,10 @@ import com.pokemonreview.api.dto.RegisterDTO;
 import com.pokemonreview.api.dto.UpdateProfileDto;
 import com.pokemonreview.api.libs.AuthConstant;
 import com.pokemonreview.api.models.Profile;
+import com.pokemonreview.api.models.Role;
 import com.pokemonreview.api.models.User;
 import com.pokemonreview.api.repository.ProfileRepository;
+import com.pokemonreview.api.repository.RoleRepository;
 import com.pokemonreview.api.repository.UserRepository;
 import com.pokemonreview.api.security.JWTGenerator;
 import org.springframework.data.util.Pair;
@@ -34,6 +36,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
     private ValidatorService validatorService;
     private AuthenticationManager authenticationManager;
     private JWTGenerator jwtGenerator;
@@ -42,7 +45,7 @@ public class AuthService {
 
     public AuthService(ValidatorService validatorService, AuthenticationManager authenticationManager, JWTGenerator jwtGenerator, TemplateService templateService,
                        UserRepository userRepository, ProfileRepository profileRepository, PasswordEncoder passwordEncoder,
-                       NotificationService notificationService) {
+                       NotificationService notificationService, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.profileRepository = profileRepository;
@@ -51,6 +54,7 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
         this.jwtGenerator = jwtGenerator;
         this.templateService = templateService;
+        this.roleRepository = roleRepository;
     }
 
     public long getUserId() throws Exception {
@@ -94,6 +98,22 @@ public class AuthService {
             model.put("sex", profile.getSex());
         }
         return model;
+    }
+
+    public long getWorkspaceId(String username) throws Exception {
+        // Lấy user từ username
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getWorkspaceId();
+    }
+
+    public boolean checkAdmin(String username) throws Exception {
+        // Lấy user từ username
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Role role = roleRepository.findByUserId(user.getUserId())
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+        return role.getRole().equals("ADMIN");
     }
 
     public ResponseEntity<?> getProfileUser(String username) {
@@ -210,7 +230,7 @@ public class AuthService {
         }
     }
 
-    public ResponseEntity<?> registerUser(String registerJson) throws Exception {
+    public ResponseEntity<?> registerUser(String registerJson, long workspaceId) throws Exception {
         // Check if username or email already exists
         Set<ValidationMessage> errors = validatorService.validate("RegisterValidator", registerJson);
         if (!errors.isEmpty()) {
@@ -252,6 +272,7 @@ public class AuthService {
         // Create new UserEntity
         User user = new User();
         user.setUserId(profile.getUserId());
+        user.setWorkspaceId(workspaceId);
         user.setUsername(registerRequestDTO.getUsername());
         user.setPassword(passwordEncoder.encode(registerRequestDTO.getPassword())); // Encode password
         user.setCreateTime(timeStamp);
@@ -324,9 +345,11 @@ public class AuthService {
             return ResponseEntity.badRequest().body("Username already exists!");
         }
         long timeStamp = new Date().getTime();
+        long workspaceId = getWorkspaceId();
         // Create new ProfileEntity
         Profile profile = new Profile();
-        profile.setUserId(getProfileId()); // Generate ID
+        profile.setUserId(getProfileId());
+        profile.setWorkspaceId(workspaceId);
         profile.setFistName(registerRequestDTO.getFirstName());
         profile.setLastName(registerRequestDTO.getLastName());
         profile.setFullName(registerRequestDTO.getFirstName() + " " + registerRequestDTO.getLastName());
@@ -355,10 +378,17 @@ public class AuthService {
         user.setUsername(registerRequestDTO.getUsername());
         user.setPassword(passwordEncoder.encode(registerRequestDTO.getPassword())); // Encode password
         user.setCreateTime(timeStamp);
+        user.setWorkspaceId(workspaceId);
         user.setUpdatedTime(timeStamp);
         // Save UserEntity
         userRepository.save(user);
-
+        Role role = new Role();
+        role.setWorkspaceId(workspaceId);
+        role.setRole("ADMIN");
+        role.setUserId(profile.getUserId());
+        role.setCreateTime(timeStamp);
+        role.setUpdatedTime(timeStamp);
+        roleRepository.save(role);
         return ResponseEntity.ok("User registered successfully");
     }
 }

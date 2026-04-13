@@ -9,15 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-
     private AuthService authService;
-
 
     @Autowired
     public AuthController(AuthService authService) {
@@ -50,11 +49,24 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody String registerJson) {
         try {
-            return authService.registerUser(registerJson);
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            if(!authService.checkAdmin(username)){
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            long workspaceId = authService.getWorkspaceId(username);
+            return authService.registerUser(registerJson, workspaceId);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
-
+    @PostMapping("/admin/register")
+    public ResponseEntity<?> registerWorkspaceUser(@RequestBody String registerJson) {
+        try {
+            return authService.registerWorkspace(registerJson);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
 }

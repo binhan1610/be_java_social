@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AddOrUpdateBuilding",
+  "type": "object",
+  "required": ["name", "address"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 100,
+      "pattern": "^(?!\\s*$).+",
+      "description": "Tên tòa nhà, không được chỉ chứa khoảng trắng"
+    },
+    "address": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 500,
+      "description": "Địa chỉ chi tiết của tòa nhà"
+    }
+  },
+  "additionalProperties": false
+}

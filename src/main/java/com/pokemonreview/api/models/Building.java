@@ -11,7 +11,7 @@ import javax.persistence.*;
 @Data
 public class Building {
     @Id
-    private Long buildingId;
+    private long buildingId;
 
     private long workspaceId;
     private String name;

@@ -22,7 +22,7 @@ public class Notification {
     private String title;
     private String topic;
     private String payload;
-    private Long userId;
+    private long userId;
     private long createTime;
     private long updatedTime;
 }

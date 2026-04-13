@@ -13,9 +13,9 @@ import javax.persistence.*;
 @NoArgsConstructor
 public class RoomService {
     @Id
-    private Long roomServiceId;
+    private long roomServiceId;
 
-    private Long workspaceId;
-    private Long roomId;
-    private Long serviceId;
+    private long workspaceId;
+    private long roomId;
+    private long serviceId;
 }

@@ -15,7 +15,7 @@ import javax.persistence.*;
 @Table(name = "roles")
 public class Role {
     @Id
-    private int userId;
+    private long userId;
 
     private long workspaceId;
     private String role;

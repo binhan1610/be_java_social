@@ -13,10 +13,10 @@ import javax.persistence.*;
 @NoArgsConstructor
 public class ServiceCatalog {
     @Id
-    private Long serviceId;
+    private long serviceId;
 
-    private Long workspaceId;
+    private long workspaceId;
     private String name;
-    private double price;
+    private long price;
     private String unit;
 }

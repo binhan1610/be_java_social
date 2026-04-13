@@ -13,9 +13,9 @@ import javax.persistence.*;
 @NoArgsConstructor
 public class Tenant {
     @Id
-    private Long tenantId;
+    private long tenantId;
 
-    private Long workspaceId;
+    private long workspaceId;
     private String fullName;
     private String phone;
     private String identityCard;

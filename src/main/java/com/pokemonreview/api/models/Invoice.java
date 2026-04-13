@@ -13,14 +13,14 @@ import javax.persistence.*;
 @Data
 public class Invoice {
     @Id
-    private Long invoiceId;
+    private long invoiceId;
 
-    private Long workspaceId;
-    private Long roomId;
+    private long workspaceId;
+    private long roomId;
     private int month;
     private int year;
-    private double totalAmount;
-    private double paidAmount;
+    private long totalAmount;
+    private long paidAmount;
     private String status;
     private long paymentTime;
     private long createTime;
