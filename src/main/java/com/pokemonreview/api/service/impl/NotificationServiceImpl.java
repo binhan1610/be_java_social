@@ -2,9 +2,9 @@ package com.pokemonreview.api.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.firebase.messaging.*;
-import com.pokemonreview.api.models.NotificationEntity;
-import com.pokemonreview.api.models.ProfileEntity;
-import com.pokemonreview.api.models.UserEntity;
+import com.pokemonreview.api.models.Notification;
+import com.pokemonreview.api.models.Profile;
+import com.pokemonreview.api.models.User;
 import com.pokemonreview.api.repository.NotificationRepository;
 import com.pokemonreview.api.repository.ProfileRepository;
 import com.pokemonreview.api.repository.UserRepository;
@@ -34,18 +34,18 @@ public class NotificationServiceImpl implements NotificationService {
         this.notificationRepository = notificationRepository;
     }
 
-    public void saveNoti(List<NotificationEntity> noti) {
-         for(NotificationEntity notificationEntity:noti)
+    public void saveNoti(List<Notification> noti) {
+         for(Notification notificationEntity:noti)
          {
              notificationRepository.save(notificationEntity);
          }
     }
 
     public String sendNotification(String title, String payload, String fcm_token) {
-        UserEntity user = userRepository.findByFcmToken(fcm_token).orElse(null);
+        User user = userRepository.findByFcmToken(fcm_token).orElse(null);
         if(user != null)
         {
-            ProfileEntity profile = profileRepository.findById(user.getUserId()).orElse(null);
+            Profile profile = profileRepository.findById(user.getUserId()).orElse(null);
             HashMap<String,Object> model = new HashMap<>();
             model.put("title",title);
             model.put("payload",payload);
@@ -54,7 +54,7 @@ public class NotificationServiceImpl implements NotificationService {
                 JsonNode jsonNode1 = templateService.generateJsonFromTemplate("responsePayloadNoti.ftl",model);
                 String resTitle = jsonNode.toString();
                 String resPayload = jsonNode1.toString();
-                Notification notification = Notification.builder()
+                com.google.firebase.messaging.Notification notification = com.google.firebase.messaging.Notification.builder()
                         .setTitle(resTitle)
                         .setBody(resPayload)
                         .setImage(profile != null? profile.getAvatar() : null)
@@ -64,7 +64,7 @@ public class NotificationServiceImpl implements NotificationService {
                         .setNotification(notification)
                         .build();
                 String response = FirebaseMessaging.getInstance().send(message);
-                NotificationEntity notificationEntity = new NotificationEntity();
+                Notification notificationEntity = new Notification();
                 notificationEntity.setTitle(resTitle);
                 notificationEntity.setPayload(resPayload);
                 notificationEntity.setUserId(user.getUserId());
@@ -92,7 +92,7 @@ public class NotificationServiceImpl implements NotificationService {
             JsonNode jsonNode1 = templateService.generateJsonFromTemplate("responsePayload.ftl",model);
             String resTitle= jsonNode.toString();
             String resPayload = jsonNode1.toString();
-            Notification notification = Notification.builder()
+            com.google.firebase.messaging.Notification notification = com.google.firebase.messaging.Notification.builder()
                     .setTitle(resTitle)
                     .setBody(resPayload)
                     .build();
@@ -152,7 +152,7 @@ public class NotificationServiceImpl implements NotificationService {
             JsonNode jsonNode1 = templateService.generateJsonFromTemplate("responsePayloadNoti.ftl",model);
             String resTitle= jsonNode.toString();
             String resPayload = jsonNode1.toString();
-            Notification notification = Notification.builder()
+            com.google.firebase.messaging.Notification notification = com.google.firebase.messaging.Notification.builder()
                     .setTitle(resTitle)
                     .setBody(resPayload)
                     .build();

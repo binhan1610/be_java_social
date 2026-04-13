@@ -7,18 +7,22 @@ import lombok.Setter;
 
 import javax.persistence.*;
 
-@Setter
 @Getter
-@Entity
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "roles")
-public class Role {
+@Entity
+@Table(name = "notification")
+public class Notification {
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
-    private int userId;
+    Long notificationId;
 
     private long workspaceId;
-    private String role;
+    private String title;
+    private String topic;
+    private String payload;
+    private Long userId;
     private long createTime;
     private long updatedTime;
 }

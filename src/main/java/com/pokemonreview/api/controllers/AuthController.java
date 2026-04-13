@@ -56,15 +56,5 @@ public class AuthController {
         }
     }
 
-//    @GetMapping("/google")
-//    public RedirectView googleOAuth(@RequestParam String code) throws Exception {
-//        return authService.googleOAuthLogin(code);
-//    }
-//
-//    @GetMapping("/facebook")
-//    public RedirectView facebookOAuth(@RequestParam String code) throws Exception {
-//        return authService.facebookOAuthLogin(code);
-//    }
-
 
 }

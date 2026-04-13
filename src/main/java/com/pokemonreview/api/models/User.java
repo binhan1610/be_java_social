@@ -1,24 +1,25 @@
 package com.pokemonreview.api.models;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.*;
 
-@Setter
-@Getter
 @Entity
-@AllArgsConstructor
+@Table(name = "account")
+@Data
 @NoArgsConstructor
-@Table(name = "roles")
-public class Role {
+public class User {
+
     @Id
-    private int userId;
+    private long userId;
 
     private long workspaceId;
-    private String role;
+    private String username;
+    private String password;
+    private String token;
+    private String fcmToken;
     private long createTime;
     private long updatedTime;
+
 }

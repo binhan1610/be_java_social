@@ -1,6 +1,5 @@
 package com.pokemonreview.api.controllers;
 
-import com.pokemonreview.api.models.UserEntity;
 import com.pokemonreview.api.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

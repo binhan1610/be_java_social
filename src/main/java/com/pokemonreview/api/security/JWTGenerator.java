@@ -2,7 +2,7 @@ package com.pokemonreview.api.security;
 
 import java.util.Date;
 
-import com.pokemonreview.api.models.UserEntity;
+import com.pokemonreview.api.models.User;
 import com.pokemonreview.api.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -64,7 +64,7 @@ public class JWTGenerator {
 
 			// So sánh token với dữ liệu trong cơ sở dữ liệu (ví dụ: lấy token từ db và so sánh)
 			String username=this.getUsernameFromJWT(token);
-			UserEntity user= this.userRepository.findByUsername(username).orElseThrow(()->new AuthenticationCredentialsNotFoundException("User not found"));
+			User user= this.userRepository.findByUsername(username).orElseThrow(()->new AuthenticationCredentialsNotFoundException("User not found"));
 			String tokenFromDB = user.getToken();
 			if (!token.equals(tokenFromDB)) {
 				throw new AuthenticationCredentialsNotFoundException("JWT does not match token in database");
