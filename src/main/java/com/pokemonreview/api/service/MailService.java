@@ -18,7 +18,7 @@ public class MailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    @Value("${app.mail.sender-name:}")
+    @Value("Quản lý Bình An")
     private String fromName;
 
     @Value("${app.invoice.notification.to:${spring.mail.username}}")
@@ -26,7 +26,7 @@ public class MailService {
 
 
     public void sendInvoiceNotification(String subject, String body) {
-        sendMail(defaultTo, subject, body);
+        sendMail("dangbinhan1610@gmail.com", subject, body);
     }
 
     public void sendMail(String to, String subject, String body) {

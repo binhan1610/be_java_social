@@ -21,31 +21,29 @@ public class InvoiceJob {
     @Autowired private InvoiceRepository invoiceRepository;
     @Autowired private MailService mailService;
 
-    @Scheduled(cron = "0 0 0 1 * ?")
+        @Scheduled(cron = "0 0 0 1 * ?")
+//    @Scheduled(cron = "0 */1 * * * ?")
     @Transactional
     public void generateMonthlyInvoices() {
-        // 1. Xác định tháng và năm cần tính tiền (Tháng trước)
         LocalDate lastMonthDate = LocalDate.now().minusMonths(1);
         int targetMonth = lastMonthDate.getMonthValue();
         int targetYear = lastMonthDate.getYear();
 
-        // 2. Lấy tất cả các phòng đang có người ở (OCCUPIED)
-        List<Room> activeRooms = roomRepository.findAll(); // Có thể lọc thêm .stream().filter(...)
+        System.out.println("month " + targetMonth + "year " + targetYear);
+        List<Room> activeRooms = roomRepository.findAll();
 
         for (Room room : activeRooms) {
             try {
-                // 3. Tìm hợp đồng đang hiệu lực của phòng
                 Contract activeContract = contractRepository.findByRoomIdAndStatus(room.getRoomId(), "ACTIVE")
                         .orElse(null);
 
-                if (activeContract == null) continue; // Phòng không có hợp đồng thì bỏ qua
+                if (activeContract == null) continue;
 
-                // 4. Lấy chỉ số điện nước tháng vừa rồi
                 MeterReading reading = meterReadingRepository
                         .findByRoomIdAndMonthAndYear(room.getRoomId(), targetMonth, targetYear)
                         .orElse(null);
 
-                long totalAmount = room.getPrice(); // Bắt đầu bằng tiền thuê phòng cơ bản
+                long totalAmount = room.getPrice();
 
                 if (reading != null) {
                     long electricCost = (long) (reading.getElectricNew() - reading.getElectricOld()) * 3500;
@@ -76,7 +74,6 @@ public class InvoiceJob {
 
                 invoiceRepository.save(invoice);
 
-                // 7. Gửi email thông báo khi hóa đơn đã được tạo thành công
                 String subject = String.format("Hóa đơn mới tháng %d/%d cho phòng %d", targetMonth, targetYear, room.getRoomId());
                 String content = String.format(
                         "Hóa đơn mới đã được tạo thành công.%n" +
@@ -87,9 +84,8 @@ public class InvoiceJob {
                         room.getRoomId(), targetMonth, targetYear, totalAmount, invoice.getStatus()
                 );
                 mailService.sendInvoiceNotification(subject, content);
-
+                System.out.println("send success");
             } catch (Exception e) {
-                // Log lỗi cho từng phòng để không làm chết cả Job
                 System.err.println("Lỗi khi tạo hóa đơn cho phòng: " + room.getRoomId() + " - " + e.getMessage());
             }
         }
