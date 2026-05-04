@@ -53,8 +53,31 @@ public class ContractController {
         return ResponseEntity.ok(contractRepository.findByTenantId(tenantId));
     }
 
+    @GetMapping("/workspace")
+    public ResponseEntity<List<Contract>> getByCurrentWorkspace() throws Exception {
+        return ResponseEntity.ok(contractRepository.findByWorkspaceId(getCurrentWorkspaceId()));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Contract>> searchContracts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int offset
+    ) throws Exception {
+        int safeLimit = Math.min(Math.max(limit, 1), 100);
+        int safeOffset = Math.max(offset, 0);
+        String resolvedKeyword = keyword != null ? keyword : q;
+        return ResponseEntity.ok(contractRepository.searchByKeyword(
+                getCurrentWorkspaceId(),
+                resolvedKeyword,
+                safeLimit,
+                safeOffset
+        ));
+    }
+
     // --- 4. CẬP NHẬT HỢP ĐỒNG (Trạng thái, tiền cọc...) ---
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<?> updateContract(@PathVariable Long id, @RequestBody String json) throws Exception {
         Set<ValidationMessage> errors = validatorService.validate("UpdateContractValidator", json);
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
@@ -72,7 +95,7 @@ public class ContractController {
 
     // --- 5. GIA HẠN HỢP ĐỒNG (Extend duration: 6M, 12M...) ---
     // API này nhận vào chuỗi duration để tự tính endDate mới dựa trên endDate cũ
-    @PutMapping("/extend/{id}")
+    @PutMapping("/{id}/extend")
     public ResponseEntity<?> extendContract(@PathVariable Long id, @RequestParam String duration) {
         return contractRepository.findById(id).map(contract -> {
             long newEndDate = calculateExtendedEndDate(contract.getEndDate(), duration);
@@ -83,7 +106,7 @@ public class ContractController {
     }
 
     // --- 6. XÓA HỢP ĐỒNG (Thanh lý) ---
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteContract(@PathVariable Long id) {
         if (contractRepository.existsById(id)) {
             contractRepository.deleteById(id);

@@ -322,6 +322,7 @@ public class AuthService {
             model.put("expireDate", expireDate);
             model.put("userId", user.getUserId());
             model.put("fullName", profile.getFullName());
+            model.put("workspaceId", user.getWorkspaceId());
             // Build JSON response using template
             JsonNode jsonResponse = templateService.generateJsonFromTemplate("responseLogin.ftl", model);
 

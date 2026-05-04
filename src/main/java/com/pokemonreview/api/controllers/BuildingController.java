@@ -30,7 +30,7 @@ public class BuildingController {
     private AuthService authService;
 
     // 1. Thêm mới tòa nhà
-    @PostMapping("/add")
+    @PostMapping
     public ResponseEntity<?> addBuilding(@RequestBody String addJson) throws Exception {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -54,6 +54,25 @@ public class BuildingController {
         return ResponseEntity.ok(buildingRepository.findByWorkspaceId(workspaceId));
     }
 
+    @GetMapping("/workspace")
+    public ResponseEntity<List<Building>> getByCurrentWorkspace() throws Exception {
+        return ResponseEntity.ok(buildingRepository.findByWorkspaceId(authService.getWorkspaceId(SecurityContextHolder.getContext().getAuthentication().getName())));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Building>> searchBuildings(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int offset
+    ) throws Exception {
+        long workspaceId = authService.getWorkspaceId(SecurityContextHolder.getContext().getAuthentication().getName());
+        int safeLimit = Math.min(Math.max(limit, 1), 100);
+        int safeOffset = Math.max(offset, 0);
+        String resolvedKeyword = keyword != null ? keyword : q;
+        return ResponseEntity.ok(buildingRepository.searchByKeyword(workspaceId, resolvedKeyword, safeLimit, safeOffset));
+    }
+
     // 3. Lấy chi tiết 1 tòa nhà
     @GetMapping("/{id}")
     public ResponseEntity<Building> getById(@PathVariable Long id) {
@@ -63,7 +82,7 @@ public class BuildingController {
     }
 
     // 4. Cập nhật thông tin
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<?> updateBuilding(@PathVariable Long id, @RequestBody String updateJson) throws Exception {
         Set<ValidationMessage> errors = validatorService.validate("addOrUpdateValidator", updateJson);
         if (!errors.isEmpty()) {
@@ -79,7 +98,7 @@ public class BuildingController {
     }
 
     // 5. Xóa tòa nhà
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBuilding(@PathVariable Long id) {
         if (buildingRepository.existsById(id)) {
             buildingRepository.deleteById(id);

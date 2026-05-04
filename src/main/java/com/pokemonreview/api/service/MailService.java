@@ -33,7 +33,7 @@ public class MailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
 
-            if (fromName == null || fromName.isBlank()) {
+            if (fromName == null || fromName.trim().isEmpty()) {
                 helper.setFrom(fromEmail);
             } else {
                 helper.setFrom(new InternetAddress(fromEmail, fromName));

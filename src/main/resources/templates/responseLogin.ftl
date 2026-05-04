@@ -3,5 +3,6 @@
 "accessToken": "${accessToken}",
 "tokenType": "Bearer",
 "userId": "${userId?c}",
-"fullName": "${fullName}"
+"fullName": "${fullName}",
+"workspaceId": "${workspaceId?c}"
 }

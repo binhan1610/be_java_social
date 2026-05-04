@@ -39,7 +39,7 @@ public class TenantController {
     }
 
     // --- 1. THÊM KHÁCH & TẠO HỢP ĐỒNG ---
-    @PostMapping("/add")
+    @PostMapping
     @Transactional
     public ResponseEntity<?> addTenant(@RequestBody String json) throws Exception {
         // Validate JSON Schema (File: AddTenantValidator.json)
@@ -91,7 +91,7 @@ public class TenantController {
     }
 
     // --- 2. CẬP NHẬT THÔNG TIN KHÁCH (Update riêng) ---
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<?> updateTenant(@PathVariable Long id, @RequestBody String json) throws Exception {
         Set<ValidationMessage> errors = validatorService.validate("UpdateTenantValidator", json);
         if (!errors.isEmpty()) return ResponseEntity.badRequest().body(errors);
@@ -115,8 +115,31 @@ public class TenantController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/workspace")
+    public ResponseEntity<List<Tenant>> getByWorkspace() throws Exception {
+        return ResponseEntity.ok(tenantRepository.findByWorkspaceId(getCurrentWorkspaceId()));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Tenant>> searchTenants(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int offset
+    ) throws Exception {
+        int safeLimit = Math.min(Math.max(limit, 1), 100);
+        int safeOffset = Math.max(offset, 0);
+        String resolvedKeyword = keyword != null ? keyword : q;
+        return ResponseEntity.ok(tenantRepository.searchByKeyword(
+                getCurrentWorkspaceId(),
+                resolvedKeyword,
+                safeLimit,
+                safeOffset
+        ));
+    }
+
     // --- 4. XÓA KHÁCH ---
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<String> deleteTenant(@PathVariable Long id) {
         if (tenantRepository.existsById(id)) {

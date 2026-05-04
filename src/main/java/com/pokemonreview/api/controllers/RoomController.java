@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
 import com.pokemonreview.api.dto.AddOrUpdateRoomDto;
 import com.pokemonreview.api.models.Room;
+import com.pokemonreview.api.repository.ContractRepository;
 import com.pokemonreview.api.repository.RoomRepository;
 import com.pokemonreview.api.service.AuthService;
 import com.pokemonreview.api.service.IdGeneratorService;
@@ -24,6 +25,8 @@ public class RoomController {
     @Autowired
     private RoomRepository roomRepository;
     @Autowired
+    private ContractRepository contractRepository;
+    @Autowired
     private ValidatorService validatorService;
     @Autowired
     private AuthService authService;
@@ -35,7 +38,7 @@ public class RoomController {
     }
 
     // 1. Thêm phòng mới
-    @PostMapping("/add")
+    @PostMapping
     public ResponseEntity<?> addRoom(@RequestBody String addJson) throws Exception {
         // Validate bằng file AddOrUpdateRoomValidator.json
         Set<ValidationMessage> errors = validatorService.validate("AddOrUpdateRoomValidator", addJson);
@@ -61,13 +64,29 @@ public class RoomController {
         return ResponseEntity.ok(roomRepository.save(room));
     }
 
-    // 2. Lấy danh sách phòng theo tòa nhà
+    // 2. Lấy danh sách phòng theo tòa nhà và filter bổ sung
     @GetMapping("/building/{buildingId}")
-    public ResponseEntity<List<Room>> getByBuilding(@PathVariable Long buildingId) {
-        return ResponseEntity.ok(roomRepository.findByBuildingId(buildingId));
+    public ResponseEntity<List<Room>> getByBuilding(
+            @PathVariable Long buildingId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Boolean available
+    ) throws Exception {
+        return ResponseEntity.ok(filterRooms(buildingId, status, q, available));
     }
 
-    // 3. Lấy chi tiết 1 phòng
+    // 3. Lấy danh sách phòng theo workspace với filter
+    @GetMapping
+    public ResponseEntity<List<Room>> getRooms(
+            @RequestParam(required = false) Long buildingId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Boolean available
+    ) throws Exception {
+        return ResponseEntity.ok(filterRooms(buildingId, status, q, available));
+    }
+
+    // 4. Lấy chi tiết 1 phòng
     @GetMapping("/{id}")
     public ResponseEntity<Room> getById(@PathVariable Long id) {
         return roomRepository.findById(id)
@@ -75,8 +94,39 @@ public class RoomController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    private List<Room> filterRooms(Long buildingId, String status, String q, Boolean available) throws Exception {
+        long workspaceId = getCurrentWorkspaceId();
+        List<Room> rooms = roomRepository.findByWorkspaceId(workspaceId);
+
+        if (buildingId != null) {
+            rooms.removeIf(room -> room.getBuildingId() != buildingId);
+        }
+        if (status != null && !status.isEmpty()) {
+            rooms.removeIf(room -> room.getStatus() == null || !room.getStatus().equalsIgnoreCase(status));
+        }
+        if (q != null && !q.isEmpty()) {
+            String query = q.toLowerCase();
+            rooms.removeIf(room -> {
+                String name = room.getName() == null ? "" : room.getName().toLowerCase();
+                String statusValue = room.getStatus() == null ? "" : room.getStatus().toLowerCase();
+                return !(String.valueOf(room.getRoomId()).contains(query)
+                        || name.contains(query)
+                        || statusValue.contains(query));
+            });
+        }
+        if (available != null) {
+            rooms.removeIf(room -> available.equals(hasActiveContract(room.getRoomId())));
+        }
+        return rooms;
+    }
+
+    private boolean hasActiveContract(long roomId) {
+        return contractRepository.findByRoomIdAndStatus(roomId, "ACTIVE").isPresent()
+                || contractRepository.findByRoomIdAndStatus(roomId, "active").isPresent();
+    }
+
     // 4. Cập nhật thông tin phòng
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<?> updateRoom(@PathVariable Long id, @RequestBody String updateJson) throws Exception {
         Set<ValidationMessage> errors = validatorService.validate("AddOrUpdateRoomValidator", updateJson);
         if (!errors.isEmpty()) {
@@ -97,7 +147,7 @@ public class RoomController {
     }
 
     // 5. Xóa phòng
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteRoom(@PathVariable Long id) {
         if (roomRepository.existsById(id)) {
             roomRepository.deleteById(id);
