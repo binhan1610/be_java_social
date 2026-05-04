@@ -2,12 +2,15 @@ package com.pokemonreview.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
+import com.pokemonreview.api.dto.PagedResponse;
 import com.pokemonreview.api.models.RoomService;
 import com.pokemonreview.api.repository.RoomServiceRepository;
 import com.pokemonreview.api.service.AuthService;
 import com.pokemonreview.api.service.IdGeneratorService;
 import com.pokemonreview.api.service.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,13 +48,34 @@ public class RoomServiceController {
 
     // Lấy danh sách dịch vụ của 1 phòng cụ thể
     @GetMapping("/room/{roomId}")
-    public ResponseEntity<List<RoomService>> getByRoom(@PathVariable Long roomId) {
-        return ResponseEntity.ok(roomServiceRepository.findByRoomId(roomId));
+    public ResponseEntity<PagedResponse<RoomService>> getByRoom(
+            @PathVariable Long roomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(PagedResponse.from(roomServiceRepository.findByRoomId(
+                roomId,
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("roomServiceId"))
+                )
+        )));
     }
 
     @GetMapping("/workspace")
-    public ResponseEntity<List<RoomService>> getByWorkspace() throws Exception {
-        return ResponseEntity.ok(roomServiceRepository.findByWorkspaceId(getCurrentWorkspaceId()));
+    public ResponseEntity<PagedResponse<RoomService>> getByWorkspace(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) throws Exception {
+        return ResponseEntity.ok(PagedResponse.from(roomServiceRepository.findByWorkspaceId(
+                getCurrentWorkspaceId(),
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("roomServiceId"))
+                )
+        )));
     }
 
     @GetMapping("/search")

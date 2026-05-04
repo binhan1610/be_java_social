@@ -1,8 +1,10 @@
 package com.pokemonreview.api.repository;
 
 import com.pokemonreview.api.models.MeterReading;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -15,10 +17,10 @@ public interface MeterReadingRepository extends JpaRepository<MeterReading, Long
     Optional<MeterReading> findByRoomIdAndMonthAndYear(long roomId, int month, int year);
 
     // Lấy lịch sử ghi chỉ số của một phòng
-    List<MeterReading> findByRoomIdOrderByYearDescMonthDesc(long roomId);
+    Page<MeterReading> findByRoomIdOrderByYearDescMonthDesc(long roomId, Pageable pageable);
 
     // Lấy tất cả chỉ số trong một workspace
-    List<MeterReading> findByWorkspaceId(long workspaceId);
+    Page<MeterReading> findByWorkspaceId(long workspaceId, Pageable pageable);
 
     @Query(value = """
             SELECT *

@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AddOrUpdateRoom",
+  "type": "object",
+  "required": ["buildingId", "name", "price", "maxCapacity"],
+  "properties": {
+    "buildingId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^(?!\\s*$).+"
+    },
+    "price": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "maxCapacity": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

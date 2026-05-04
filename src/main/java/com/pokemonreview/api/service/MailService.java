@@ -24,6 +24,7 @@ public class MailService {
     @Value("${app.invoice.notification.to:${spring.mail.username}}")
     private String defaultTo;
 
+
     public void sendInvoiceNotification(String subject, String body) {
         sendMail(defaultTo, subject, body);
     }

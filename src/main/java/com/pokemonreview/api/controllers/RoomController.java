@@ -3,19 +3,19 @@ package com.pokemonreview.api.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
 import com.pokemonreview.api.dto.AddOrUpdateRoomDto;
+import com.pokemonreview.api.dto.PagedResponse;
 import com.pokemonreview.api.models.Room;
-import com.pokemonreview.api.repository.ContractRepository;
 import com.pokemonreview.api.repository.RoomRepository;
 import com.pokemonreview.api.service.AuthService;
 import com.pokemonreview.api.service.IdGeneratorService;
 import com.pokemonreview.api.service.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Set;
 
 @RestController
@@ -24,8 +24,6 @@ public class RoomController {
 
     @Autowired
     private RoomRepository roomRepository;
-    @Autowired
-    private ContractRepository contractRepository;
     @Autowired
     private ValidatorService validatorService;
     @Autowired
@@ -66,24 +64,28 @@ public class RoomController {
 
     // 2. Lấy danh sách phòng theo tòa nhà và filter bổ sung
     @GetMapping("/building/{buildingId}")
-    public ResponseEntity<List<Room>> getByBuilding(
+    public ResponseEntity<PagedResponse<Room>> getByBuilding(
             @PathVariable Long buildingId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) Boolean available
+            @RequestParam(required = false) Boolean available,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) throws Exception {
-        return ResponseEntity.ok(filterRooms(buildingId, status, q, available));
+        return ResponseEntity.ok(queryRooms(buildingId, status, q, available, page, size));
     }
 
     // 3. Lấy danh sách phòng theo workspace với filter
     @GetMapping
-    public ResponseEntity<List<Room>> getRooms(
+    public ResponseEntity<PagedResponse<Room>> getRooms(
             @RequestParam(required = false) Long buildingId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) Boolean available
+            @RequestParam(required = false) Boolean available,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
     ) throws Exception {
-        return ResponseEntity.ok(filterRooms(buildingId, status, q, available));
+        return ResponseEntity.ok(queryRooms(buildingId, status, q, available, page, size));
     }
 
     // 4. Lấy chi tiết 1 phòng
@@ -94,35 +96,22 @@ public class RoomController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    private List<Room> filterRooms(Long buildingId, String status, String q, Boolean available) throws Exception {
-        long workspaceId = getCurrentWorkspaceId();
-        List<Room> rooms = roomRepository.findByWorkspaceId(workspaceId);
-
-        if (buildingId != null) {
-            rooms.removeIf(room -> room.getBuildingId() != buildingId);
-        }
-        if (status != null && !status.isEmpty()) {
-            rooms.removeIf(room -> room.getStatus() == null || !room.getStatus().equalsIgnoreCase(status));
-        }
-        if (q != null && !q.isEmpty()) {
-            String query = q.toLowerCase();
-            rooms.removeIf(room -> {
-                String name = room.getName() == null ? "" : room.getName().toLowerCase();
-                String statusValue = room.getStatus() == null ? "" : room.getStatus().toLowerCase();
-                return !(String.valueOf(room.getRoomId()).contains(query)
-                        || name.contains(query)
-                        || statusValue.contains(query));
-            });
-        }
-        if (available != null) {
-            rooms.removeIf(room -> available.equals(hasActiveContract(room.getRoomId())));
-        }
-        return rooms;
-    }
-
-    private boolean hasActiveContract(long roomId) {
-        return contractRepository.findByRoomIdAndStatus(roomId, "ACTIVE").isPresent()
-                || contractRepository.findByRoomIdAndStatus(roomId, "active").isPresent();
+    private PagedResponse<Room> queryRooms(
+            Long buildingId,
+            String status,
+            String q,
+            Boolean available,
+            int page,
+            int size
+    ) throws Exception {
+        return PagedResponse.from(roomRepository.searchRooms(
+                getCurrentWorkspaceId(),
+                buildingId,
+                status,
+                q,
+                available,
+                PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100))
+        ));
     }
 
     // 4. Cập nhật thông tin phòng

@@ -3,6 +3,7 @@ package com.pokemonreview.api.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
 import com.pokemonreview.api.dto.AddTenantWithContractDto;
+import com.pokemonreview.api.dto.PagedResponse;
 import com.pokemonreview.api.models.Contract;
 import com.pokemonreview.api.models.Tenant;
 import com.pokemonreview.api.repository.ContractRepository;
@@ -11,6 +12,8 @@ import com.pokemonreview.api.service.AuthService;
 import com.pokemonreview.api.service.IdGeneratorService;
 import com.pokemonreview.api.service.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -115,9 +118,19 @@ public class TenantController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/workspace")
-    public ResponseEntity<List<Tenant>> getByWorkspace() throws Exception {
-        return ResponseEntity.ok(tenantRepository.findByWorkspaceId(getCurrentWorkspaceId()));
+    @GetMapping("")
+    public ResponseEntity<PagedResponse<Tenant>> getByWorkspace(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) throws Exception {
+        return ResponseEntity.ok(PagedResponse.from(tenantRepository.findByWorkspaceId(
+                getCurrentWorkspaceId(),
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("createTime"), Sort.Order.desc("tenantId"))
+                )
+        )));
     }
 
     @GetMapping("/search")

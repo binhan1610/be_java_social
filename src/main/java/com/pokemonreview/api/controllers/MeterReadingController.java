@@ -2,12 +2,15 @@ package com.pokemonreview.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
+import com.pokemonreview.api.dto.PagedResponse;
 import com.pokemonreview.api.models.MeterReading;
 import com.pokemonreview.api.repository.MeterReadingRepository;
 import com.pokemonreview.api.service.AuthService;
 import com.pokemonreview.api.service.IdGeneratorService;
 import com.pokemonreview.api.service.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -56,13 +59,30 @@ public class MeterReadingController {
 
     // 2. Lấy lịch sử ghi số của 1 phòng
     @GetMapping("/room/{roomId}")
-    public ResponseEntity<List<MeterReading>> getHistory(@PathVariable Long roomId) {
-        return ResponseEntity.ok(meterReadingRepository.findByRoomIdOrderByYearDescMonthDesc(roomId));
+    public ResponseEntity<PagedResponse<MeterReading>> getHistory(
+            @PathVariable Long roomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(PagedResponse.from(meterReadingRepository.findByRoomIdOrderByYearDescMonthDesc(
+                roomId,
+                PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100))
+        )));
     }
 
     @GetMapping("/workspace")
-    public ResponseEntity<List<MeterReading>> getByWorkspace() throws Exception {
-        return ResponseEntity.ok(meterReadingRepository.findByWorkspaceId(getCurrentWorkspaceId()));
+    public ResponseEntity<PagedResponse<MeterReading>> getByWorkspace(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) throws Exception {
+        return ResponseEntity.ok(PagedResponse.from(meterReadingRepository.findByWorkspaceId(
+                getCurrentWorkspaceId(),
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("year"), Sort.Order.desc("month"), Sort.Order.desc("meterReadingId"))
+                )
+        )));
     }
 
     @GetMapping("/search")

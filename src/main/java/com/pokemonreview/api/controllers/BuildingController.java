@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
 
 import com.pokemonreview.api.dto.AddOrUpdateBuildingDto;
+import com.pokemonreview.api.dto.PagedResponse;
 import com.pokemonreview.api.models.Building;
 import com.pokemonreview.api.repository.BuildingRepository;
 import com.pokemonreview.api.service.AuthService;
 import com.pokemonreview.api.service.IdGeneratorService;
 import com.pokemonreview.api.service.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -50,13 +53,34 @@ public class BuildingController {
     }
 
     @GetMapping("/workspace/{workspaceId}")
-    public ResponseEntity<List<Building>> getByWorkspace(@PathVariable Long workspaceId) {
-        return ResponseEntity.ok(buildingRepository.findByWorkspaceId(workspaceId));
+    public ResponseEntity<PagedResponse<Building>> getByWorkspace(
+            @PathVariable Long workspaceId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(PagedResponse.from(buildingRepository.findByWorkspaceId(
+                workspaceId,
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("buildingId"))
+                )
+        )));
     }
 
     @GetMapping("/workspace")
-    public ResponseEntity<List<Building>> getByCurrentWorkspace() throws Exception {
-        return ResponseEntity.ok(buildingRepository.findByWorkspaceId(authService.getWorkspaceId(SecurityContextHolder.getContext().getAuthentication().getName())));
+    public ResponseEntity<PagedResponse<Building>> getByCurrentWorkspace(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) throws Exception {
+        return ResponseEntity.ok(PagedResponse.from(buildingRepository.findByWorkspaceId(
+                authService.getWorkspaceId(SecurityContextHolder.getContext().getAuthentication().getName()),
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("buildingId"))
+                )
+        )));
     }
 
     @GetMapping("/search")

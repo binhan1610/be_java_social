@@ -2,11 +2,14 @@ package com.pokemonreview.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
+import com.pokemonreview.api.dto.PagedResponse;
 import com.pokemonreview.api.models.Contract;
 import com.pokemonreview.api.repository.ContractRepository;
 import com.pokemonreview.api.service.AuthService;
 import com.pokemonreview.api.service.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,19 +46,51 @@ public class ContractController {
 
     // --- 2. LẤY DANH SÁCH HỢP ĐỒNG THEO PHÒNG (Lịch sử thuê) ---
     @GetMapping("/room/{roomId}")
-    public ResponseEntity<List<Contract>> getByRoom(@PathVariable Long roomId) {
-        return ResponseEntity.ok(contractRepository.findByRoomId(roomId));
+    public ResponseEntity<PagedResponse<Contract>> getByRoom(
+            @PathVariable Long roomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(PagedResponse.from(contractRepository.findByRoomId(
+                roomId,
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("updateTime"), Sort.Order.desc("contractId"))
+                )
+        )));
     }
 
     // --- 3. LẤY DANH SÁCH HỢP ĐỒNG THEO KHÁCH ---
     @GetMapping("/tenant/{tenantId}")
-    public ResponseEntity<List<Contract>> getByTenant(@PathVariable Long tenantId) {
-        return ResponseEntity.ok(contractRepository.findByTenantId(tenantId));
+    public ResponseEntity<PagedResponse<Contract>> getByTenant(
+            @PathVariable Long tenantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(PagedResponse.from(contractRepository.findByTenantId(
+                tenantId,
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("updateTime"), Sort.Order.desc("contractId"))
+                )
+        )));
     }
 
     @GetMapping("/workspace")
-    public ResponseEntity<List<Contract>> getByCurrentWorkspace() throws Exception {
-        return ResponseEntity.ok(contractRepository.findByWorkspaceId(getCurrentWorkspaceId()));
+    public ResponseEntity<PagedResponse<Contract>> getByCurrentWorkspace(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) throws Exception {
+        return ResponseEntity.ok(PagedResponse.from(contractRepository.findByWorkspaceId(
+                getCurrentWorkspaceId(),
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("updateTime"), Sort.Order.desc("contractId"))
+                )
+        )));
     }
 
     @GetMapping("/search")

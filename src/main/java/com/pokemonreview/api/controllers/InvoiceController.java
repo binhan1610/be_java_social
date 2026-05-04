@@ -2,11 +2,14 @@ package com.pokemonreview.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
+import com.pokemonreview.api.dto.PagedResponse;
 import com.pokemonreview.api.models.Invoice;
 import com.pokemonreview.api.repository.InvoiceRepository;
 import com.pokemonreview.api.service.AuthService;
 import com.pokemonreview.api.service.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,8 +35,18 @@ public class InvoiceController {
 
     // 1. LẤY DANH SÁCH HÓA ĐƠN THEO WORKSPACE (Dùng cho trang quản lý tổng)
     @GetMapping("/workspace")
-    public ResponseEntity<List<Invoice>> getAllInvoices() throws Exception {
-        return ResponseEntity.ok(invoiceRepository.findByWorkspaceId(getCurrentWorkspaceId()));
+    public ResponseEntity<PagedResponse<Invoice>> getAllInvoices(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) throws Exception {
+        return ResponseEntity.ok(PagedResponse.from(invoiceRepository.findByWorkspaceId(
+                getCurrentWorkspaceId(),
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("year"), Sort.Order.desc("month"), Sort.Order.desc("invoiceId"))
+                )
+        )));
     }
 
     @GetMapping("/search")
@@ -56,8 +69,15 @@ public class InvoiceController {
 
     // 2. LẤY HÓA ĐƠN CỦA 1 PHÒNG CỤ THỂ
     @GetMapping("/room/{roomId}")
-    public ResponseEntity<List<Invoice>> getByRoom(@PathVariable Long roomId) {
-        return ResponseEntity.ok(invoiceRepository.findByRoomIdOrderByYearDescMonthDesc(roomId));
+    public ResponseEntity<PagedResponse<Invoice>> getByRoom(
+            @PathVariable Long roomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(PagedResponse.from(invoiceRepository.findByRoomIdOrderByYearDescMonthDesc(
+                roomId,
+                PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100))
+        )));
     }
 
     // 3. CHI TIẾT 1 HÓA ĐƠN

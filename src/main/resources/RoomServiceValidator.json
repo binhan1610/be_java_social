@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RoomService",
+  "type": "object",
+  "required": ["roomId", "serviceId"],
+  "properties": {
+    "roomId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "serviceId": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

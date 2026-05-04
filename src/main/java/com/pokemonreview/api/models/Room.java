@@ -1,5 +1,6 @@
 package com.pokemonreview.api.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import javax.persistence.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonFormat(shape = JsonFormat.Shape.STRING)
 public class Room {
     @Id
     private long roomId;

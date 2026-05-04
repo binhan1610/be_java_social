@@ -2,12 +2,15 @@ package com.pokemonreview.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
+import com.pokemonreview.api.dto.PagedResponse;
 import com.pokemonreview.api.models.ServiceCatalog;
 import com.pokemonreview.api.repository.ServiceCatalogRepository;
 import com.pokemonreview.api.service.AuthService;
 import com.pokemonreview.api.service.IdGeneratorService;
 import com.pokemonreview.api.service.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,8 +46,18 @@ public class ServiceCatalogController {
     }
 
     @GetMapping("/workspace")
-    public ResponseEntity<List<ServiceCatalog>> getByWorkspace() throws Exception {
-        return ResponseEntity.ok(serviceCatalogRepository.findByWorkspaceId(getCurrentWorkspaceId()));
+    public ResponseEntity<PagedResponse<ServiceCatalog>> getByWorkspace(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) throws Exception {
+        return ResponseEntity.ok(PagedResponse.from(serviceCatalogRepository.findByWorkspaceId(
+                getCurrentWorkspaceId(),
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.min(Math.max(size, 1), 100),
+                        Sort.by(Sort.Order.desc("serviceId"))
+                )
+        )));
     }
 
     @GetMapping("/search")

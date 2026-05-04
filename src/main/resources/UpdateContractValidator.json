@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UpdateContract",
+  "type": "object",
+  "required": ["status", "depositAmount", "startDate", "endDate"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "depositAmount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "startDate": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "endDate": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}
